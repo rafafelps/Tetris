@@ -40,7 +40,7 @@ sf::Texture texture;
 sf::RenderWindow window(sf::VideoMode(width, height), "Tetris");
 double scale = height / (double(B_Y * 10)); // height / 20 // result / 10 == scale
 double offset = (width - (B_X * 10 * scale)) / 2.0;
-sf::Sprite wall[40];
+sf::Sprite wall[B_Y * 2];
 
 int main() {
     texture.loadFromFile("bricks.png");
@@ -51,7 +51,7 @@ int main() {
     struct Player p;
     initPlayer(&p);
 
-    for (int i = 0, j = -1; i < 40; i++) {
+    for (int i = 0, j = -1; i < B_Y * 2; i++) {
         if (!(i & 0x01)) { j++; }
         wall[i].setTexture(texture);
         wall[i].setTextureRect(sf::IntRect(0, 70, 10, 10));
@@ -245,7 +245,7 @@ void render(struct Player* p) {
         }
     }
 
-    for (int i = 0; i < 40; i++) {
+    for (int i = 0; i < B_Y * 2; i++) {
         window.draw(wall[i]);
     }
 
