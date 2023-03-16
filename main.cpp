@@ -25,6 +25,7 @@ int moveDown(struct Player* p);
 void rotate(struct Player* p);
 void checkCompletedRows();
 void render(struct Player* p);
+
 unsigned char board[B_Y][B_X] = {0};
 unsigned int shapes[7][4] = {{0x0F00, 0x4444, 0x0F00, 0x4444},
                              {0x8E00, 0x6440, 0x0E20, 0x44C0},
@@ -38,7 +39,7 @@ int width = 1280;
 int height = int(width / aspect_ratio);
 sf::Texture texture;
 sf::RenderWindow window(sf::VideoMode(width, height), "Tetris");
-double scale = height / (double(B_Y * 10)); // height / 20 // result / 10 == scale
+double scale = height / (double(B_Y * 10));
 double offset = (width - (B_X * 10 * scale)) / 2.0;
 sf::Sprite wall[B_Y * 2];
 
@@ -158,6 +159,8 @@ void pickShape(struct Player* p) {
     if (p->shape & 0x1111) { p->x = (B_X - 4) / 2; }
     else if (p->shape & 0x2222) { p->x = (B_X - 3) / 2; }
     else { p->x = (B_X / 2) - 1; }
+
+    if (collisionChecker(p)) { render(p); sf::sleep(sf::milliseconds(1000)); exit(10); }
 }
 
 unsigned char collisionChecker(struct Player* p) {
