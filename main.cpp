@@ -43,6 +43,8 @@ double scale = height / (double(B_Y * 10));
 double offset = (width - (B_X * 10 * scale)) / 2.0;
 sf::Sprite wall[B_Y * 2];
 
+int score = 0;
+
 int main() {
     texture.loadFromFile("bricks.png");
 
@@ -206,22 +208,29 @@ void rotate(struct Player* p) {
 }
 
 void checkCompletedRows() {
+    int rowsCompleted = 0;
     for (int i = B_Y - 1; i >= 0; i--) {
         int isCompleted = 1;
         for (int j = 0; j < B_X; j++) {
             if (!board[i][j]) { isCompleted = 0; break; }
         }
-        if (isCompleted) {
+        if (isCompleted)
+        {
+            rowsCompleted++;
             for (int j = 0; j < B_X; j++) { board[i][j] = 0; }
-            for (int k = i; k > 0; k--) {
-                for (int j = 0; j < B_X; j++) {
+            for (int k = i; k > 0; k--) 
+            {
+                for (int j = 0; j < B_X; j++) 
+                {
                     board[k][j] = board[k-1][j];
                 }
             }
             for (int j = 0; j < B_X; j++) { board[0][j] = 0; }
             i++;
+            score += 100 + 100 * (rowsCompleted-1);
         }
     }
+    printf("Score: %d\n", score);
 }
 
 void render(struct Player* p) {
