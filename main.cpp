@@ -63,11 +63,14 @@ int main() {
 
     render(&p);
     sf::sleep(sf::milliseconds(500));
+
+    unsigned char lock = 0;
     while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed)
                 window.close();
+
             if (event.type == sf::Event::KeyReleased) {
                 if (event.key.code == sf::Keyboard::A ||
                     event.key.code == sf::Keyboard::Left) {
@@ -87,15 +90,19 @@ int main() {
                 }
                 else if (event.key.code == sf::Keyboard::S ||
                          event.key.code == sf::Keyboard::Down) {
-                    if (moveDown(&p)) { oldTime = clock.getElapsedTime().asMilliseconds(); }
+                    lock = 0;
                 }
             }
+
+            unsigned int currentPiece = p.countBag;
             if (event.type == sf::Event::KeyPressed) {
                 if (event.key.code == sf::Keyboard::S ||
                     event.key.code == sf::Keyboard::Down) {
-                        if (moveDown(&p)) { oldTime = clock.getElapsedTime().asMilliseconds(); }
+                        if (!lock) { moveDown(&p); oldTime = clock.getElapsedTime().asMilliseconds(); }
+                        if (currentPiece != p.countBag) { lock = 1; }
                 }
             }
+
         }
 
         float newTime = clock.getElapsedTime().asMilliseconds();
@@ -103,6 +110,7 @@ int main() {
             moveDown(&p);
             oldTime = newTime;
         }
+        
         sf::sleep(sf::milliseconds(16));
     }
 
@@ -162,7 +170,22 @@ void pickShape(struct Player* p) {
     else if (p->shape & 0x2222) { p->x = (B_X - 3) / 2; }
     else { p->x = (B_X / 2) - 1; }
 
-    if (collisionChecker(p)) { render(p); sf::sleep(sf::milliseconds(1000)); exit(10); }
+    // Logica para jogo perdido
+    if (collisionChecker(p)) {
+        char tmpHeight = p->y;
+        for (int i = 0; i < 3; i++) {
+            p->y = tmpHeight;
+            render(p);
+            sf::sleep(sf::milliseconds(500));
+
+            p->y = -10;
+            render(p);
+            sf::sleep(sf::milliseconds(500));
+        }
+
+        sf::sleep(sf::milliseconds(500));
+        exit(10);
+    }
 }
 
 // Verifica se a peça do jogador está colidindo com outra
@@ -239,6 +262,18 @@ void checkCompletedRows() {
 void render(struct Player* p) {
     window.clear();
 
+    // Renderiza tabuleiro
+    for (int i = 0; i < B_Y; i++) {
+        for (int j = 0; j < B_X; j++) {
+            if (board[i][j]) {
+                p->sprite.setTextureRect(sf::IntRect(0, texture.getSize().x * (board[i][j] - 1), texture.getSize().x, texture.getSize().x));
+                p->sprite.setPosition(sf::Vector2f(offset + (j * scale * texture.getSize().x), i * scale * texture.getSize().x));
+                window.draw(p->sprite);
+            }
+        }
+    }
+
+    // Renderiza jogador
     p->sprite.setTextureRect(sf::IntRect(0, texture.getSize().x * p->color, texture.getSize().x, texture.getSize().x));
     int b = 0x8000;
     for (int i = p->y; i < p->y + 4; i++) {
@@ -250,16 +285,7 @@ void render(struct Player* p) {
         }
     }
 
-    for (int i = 0; i < B_Y; i++) {
-        for (int j = 0; j < B_X; j++) {
-            if (board[i][j]) {
-                p->sprite.setTextureRect(sf::IntRect(0, texture.getSize().x * (board[i][j] - 1), texture.getSize().x, texture.getSize().x));
-                p->sprite.setPosition(sf::Vector2f(offset + (j * scale * texture.getSize().x), i * scale * texture.getSize().x));
-                window.draw(p->sprite);
-            }
-        }
-    }
-
+    // Renderiza paredes
     for (int i = 0, j = -1; i < B_Y * 2; i++) {
         if (!(i & 0x01)) { j++; }
         wall.setPosition(sf::Vector2f(i & 0x01 ? offset - (scale * texture.getSize().x) : offset + (B_X * scale * texture.getSize().x),
