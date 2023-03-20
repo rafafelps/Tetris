@@ -11,8 +11,8 @@ struct Player {
     unsigned char color;
     unsigned int shape;
     unsigned char rotation;
-    unsigned char pull[28];
-    unsigned char countPull;
+    unsigned char bag[28];
+    unsigned char countBag;
     sf::Sprite sprite;
 };
 
@@ -41,7 +41,7 @@ sf::Texture texture;
 sf::RenderWindow window(sf::VideoMode(width, height), "Tetris");
 double scale = height / (double(B_Y * 10));
 double offset = (width - (B_X * 10 * scale)) / 2.0;
-sf::Sprite wall[B_Y * 2];
+sf::Sprite wall;
 
 int score = 0;
 
@@ -54,14 +54,9 @@ int main() {
     struct Player p;
     initPlayer(&p);
 
-    for (int i = 0, j = -1; i < B_Y * 2; i++) {
-        if (!(i & 0x01)) { j++; }
-        wall[i].setTexture(texture);
-        wall[i].setTextureRect(sf::IntRect(0, 70, 10, 10));
-        wall[i].setScale(sf::Vector2f(scale, scale));
-        wall[i].setPosition(sf::Vector2f(i & 0x01 ? offset - (scale * texture.getSize().x) : offset + (B_X * scale * texture.getSize().x),
-                                         0.0 + (j * scale * texture.getSize().x)));
-    }
+    wall.setTexture(texture);
+    wall.setTextureRect(sf::IntRect(0, 70, 10, 10));
+    wall.setScale(sf::Vector2f(scale, scale));
 
     sf::Clock clock;
     float oldTime = clock.getElapsedTime().asMilliseconds();
@@ -114,17 +109,19 @@ int main() {
     return 0;
 }
 
+// Dá valores iniciais para o jogador
 void initPlayer(struct Player* p) {
     p->shape = 0;
     p->rotation = 0;
-    p->countPull = 28;
+    p->countBag = 28;
 
     p->sprite.setTexture(texture);
     p->sprite.setScale(sf::Vector2f(scale, scale));
-    fillBag(p->pull);
+    fillBag(p->bag);
     pickShape(p);
 }
 
+// Preenche a seleção de peças que o jogador vai receber
 void fillBag(unsigned char* bag) {
     unsigned char count = 0;
     for (int i = 0; i < 7; i++) {
@@ -134,6 +131,8 @@ void fillBag(unsigned char* bag) {
     for (int i = 0; i < 10; i++) { shuffle(bag, 28); }
 }
 
+
+// Aleatoriza os valores de um vetor
 void shuffle(unsigned char *array, size_t n) {
     if (n > 1) {
         size_t i;
@@ -146,14 +145,15 @@ void shuffle(unsigned char *array, size_t n) {
     }
 }
 
+// Seleciona a próxima peça do jogador (e testa para ver se perdeu o jogo)
 void pickShape(struct Player* p) {
-    p->countPull--;
+    p->countBag--;
     p->rotation = 0;
     
-    p->shape = shapes[p->pull[p->countPull]][p->rotation];
+    p->shape = shapes[p->bag[p->countBag]][p->rotation];
 
-    p->color = p->pull[p->countPull];
-    if (!p->countPull) { fillBag(p->pull); p->countPull = 28; }
+    p->color = p->bag[p->countBag];
+    if (!p->countBag) { fillBag(p->bag); p->countBag = 28; }
 
     p->y = 0;
     if (p->shape == shapes[4][0] || p->shape == shapes[5][0] || p->shape == shapes[0][0]) { p->y--; }
@@ -165,6 +165,7 @@ void pickShape(struct Player* p) {
     if (collisionChecker(p)) { render(p); sf::sleep(sf::milliseconds(1000)); exit(10); }
 }
 
+// Verifica se a peça do jogador está colidindo com outra
 unsigned char collisionChecker(struct Player* p) {
     int b = 0x8000;
     for (int i = p->y; i < p->y + 4; i++) {
@@ -175,6 +176,7 @@ unsigned char collisionChecker(struct Player* p) {
     return 0;
 }
 
+// Move a peça para baixo e verifica/limpa fileiras completadas
 int moveDown(struct Player* p) {
     p->y++;
 
@@ -195,6 +197,7 @@ int moveDown(struct Player* p) {
     return 0;
 }
 
+// Rotaciona as peças do jogador
 void rotate(struct Player* p) {
     p->rotation++;
     if (p->rotation > 3) { p->rotation = 0; }
@@ -207,6 +210,7 @@ void rotate(struct Player* p) {
     } else { render(p); }
 }
 
+// Verifica por linhas completadas e atualiza o score do jogador
 void checkCompletedRows() {
     int rowsCompleted = 0;
     for (int i = B_Y - 1; i >= 0; i--) {
@@ -218,10 +222,8 @@ void checkCompletedRows() {
         {
             rowsCompleted++;
             for (int j = 0; j < B_X; j++) { board[i][j] = 0; }
-            for (int k = i; k > 0; k--) 
-            {
-                for (int j = 0; j < B_X; j++) 
-                {
+            for (int k = i; k > 0; k--) {
+                for (int j = 0; j < B_X; j++) {
                     board[k][j] = board[k-1][j];
                 }
             }
@@ -233,6 +235,7 @@ void checkCompletedRows() {
     printf("Score: %d\n", score);
 }
 
+// Renderiza o jogo na tela
 void render(struct Player* p) {
     window.clear();
 
@@ -257,8 +260,11 @@ void render(struct Player* p) {
         }
     }
 
-    for (int i = 0; i < B_Y * 2; i++) {
-        window.draw(wall[i]);
+    for (int i = 0, j = -1; i < B_Y * 2; i++) {
+        if (!(i & 0x01)) { j++; }
+        wall.setPosition(sf::Vector2f(i & 0x01 ? offset - (scale * texture.getSize().x) : offset + (B_X * scale * texture.getSize().x),
+                                         0.0 + (j * scale * texture.getSize().x)));
+        window.draw(wall);
     }
 
     window.display();
