@@ -148,7 +148,7 @@ void pickShape() {
 
 // Verifica se a peça do jogador está colidindo com outra
 unsigned char collisionChecker() {
-    int b = 0x8000;
+    unsigned int b = 0x8000;
     for (int i = player.pos.y; i < player.pos.y + 4; i++) {
         for (int j = player.pos.x; j < player.pos.x + 4; j++, b = b>>1) {
             if ((player.shape & b) && (j < 0 || j > B_X - 1 || i < 0 || i > B_Y - 1 || board[i][j])) { return 1; }
@@ -163,7 +163,7 @@ int moveDown() {
 
     if (collisionChecker()) {
         player.pos.y--;
-        int b = 0x8000;
+        unsigned int b = 0x8000;
         for (int i = player.pos.y; i < player.pos.y + 4; i++) {
             for (int j = player.pos.x; j < player.pos.x + 4; j++, b = b>>1) {
                 if (player.shape & b) { board[i][j] = 1; }
@@ -230,14 +230,6 @@ void render() {
             } 
         }
     }*/
-    struct Pos tmp;
-    for (int i = 0; i < B_Y; i++) {
-        for (int j = 0; j < B_X; j++) {
-            tmp = {j, i};
-            transformPos(&tmp);
-            mx.setPoint(tmp.x, tmp.y, 0);
-        }
-    }
 
     // Renderiza tabuleiro
     for (int i = 0; i < B_Y; i++) {
@@ -251,7 +243,7 @@ void render() {
     }
 
     // Renderiza jogador
-    int b = 0x8000;
+    unsigned int b = 0x8000;
     for (int i = player.pos.y; i < player.pos.y + 4; i++) {
         for (int j = player.pos.x; j < player.pos.x + 4; j++, b = b>>1) {
             if (player.shape & b) {
