@@ -6,10 +6,14 @@
 #define DATA_PIN 11  // or MOSI
 #define CS_PIN  10  // or SS
 
-#define M_X 8
-#define M_Y 32
 #define B_X 8
 #define B_Y 20
+
+#define UP 1
+#define DOWN 2
+#define LEFT 3
+#define RIGHT 4
+#define CLICK 5
 
 struct Pos {
 	char x;
@@ -34,9 +38,11 @@ int moveDown();
 void rotate();
 void checkCompletedRows();
 void render();
-void transformPos(struct Pos* p);
+void transformPos(struct Pos* input);
+int joystick();
 
 MD_MAX72XX mx = MD_MAX72XX(HARDWARE_TYPE, CS_PIN, MAX_DEVICES);
+
 unsigned char board[B_Y][B_X] = {0};
 unsigned int shapes[7][4] = {{0x0F00, 0x4444, 0x0F00, 0x4444},
                              {0x8E00, 0x6440, 0x0E20, 0x44C0},
@@ -45,18 +51,16 @@ unsigned int shapes[7][4] = {{0x0F00, 0x4444, 0x0F00, 0x4444},
                              {0x06C0, 0x8C40, 0x6C00, 0x4620},
                              {0x0C60, 0x4C80, 0xC600, 0x2640},
                              {0x4E00, 0x4640, 0x0E40, 0x4C40}};
-
 struct Player player;
 unsigned int oldTime;
 unsigned char lock = 0;
+unsigned char lastInput = 0;
 
 void setup() {
     mx.begin();
     randomSeed(analogRead(0));
     initPlayer();
     oldTime = millis();
-    render();
-    delay(500);
 
     // Renderiza paredes
     for (int i = 0 ; i < B_X; i++) {
@@ -64,10 +68,43 @@ void setup() {
         transformPos(&tmp);
         mx.setPoint(tmp.x, tmp.y, 1);
     }
+
+    render();
+    delay(500);
 }
 
 void loop() {
-    // TODO: Mov Code
+    unsigned char currentInput = joystick();
+    // if (joystick() == CLICK) { exit(0); }
+
+    if (currentInput != lastInput) {
+        if (currentInput == LEFT) {
+            player.pos.x--;
+            if (collisionChecker()) { player.pos.x++; }
+            else { render(); }
+        }
+        else if (currentInput == RIGHT) {
+            player.pos.x++;
+            if (collisionChecker()) { player.pos.x--; }
+            else { render(); }
+        }
+        else if (currentInput == UP) {
+            rotate();
+        }
+        else if (currentInput == DOWN) {
+            lock = 0;
+        }
+    }
+
+    unsigned int currentPiece = player.countBag;
+    if (currentInput == lastInput) {
+        if (currentInput == DOWN) {
+            if (!lock) { moveDown(); oldTime = millis(); }
+            if (currentPiece != player.countBag) { lock = 1; }
+        }
+    }
+
+    lastInput = currentInput;
 
     if (millis() - oldTime >= 500) {
         moveDown();
@@ -213,23 +250,15 @@ void checkCompletedRows() {
 
 // Renderiza o jogo na tela
 void render() {
-    // Desliga leds (se necessário)
-    // TODO
-    /*
+    // TODO: Desligar leds (se necessário)
+    struct Pos tmp;
     for (int i = 0; i < B_Y; i++) {
         for (int j = 0; j < B_X; j++) {
-            struct Pos tmp = {j, i};
-            tmp = transformPos(&tmp);
-            if (mx.getPoint(tmp.x, tmp.y)) {
-                if (!board[i][j]) {
-                    if (i)
-                    mx.setPoint(tmp.x, tmp.y, 0);
-                }
-                if (!board[i][j] && !(player.shape & b))
-                mx.setPoint(tmp.x, tmp.y, 0);
-            } 
+            tmp = {j, i};
+            transformPos(&tmp);
+            mx.setPoint(tmp.x, tmp.y, 0);
         }
-    }*/
+    }
 
     // Renderiza tabuleiro
     for (int i = 0; i < B_Y; i++) {
@@ -258,6 +287,20 @@ void render() {
 // Recebe a posição de uma matriz normal
 // Retorna a posição correta para a matriz de leds
 void transformPos(struct Pos* input) {
-  input->x = 7 - input->x;
-  input->y = 24 - (16 * (input->y / 8)) + input->y;
+    input->x = 7 - input->x;
+    input->y = 24 - (16 * (input->y / 8)) + input->y;
+}
+
+int joystick() {
+    const int VRx = 0;
+    const int VRy = 1;
+    const int SW = 2;
+
+    if (analogRead(VRy) > 900) { return UP; }
+    if (analogRead(VRy) < 120) { return DOWN; }
+    if (analogRead(VRx) > 900) { return LEFT; }
+    if (analogRead(VRx) < 120) { return RIGHT; }
+    if (!analogRead(SW)) { return CLICK; }
+
+    return 0;
 }
