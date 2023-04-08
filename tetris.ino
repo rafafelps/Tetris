@@ -34,9 +34,9 @@ int moveDown();
 void rotate();
 void checkCompletedRows();
 void render();
-struct Pos transformPos(struct Pos* p);
+void transformPos(struct Pos* p);
 
-MD_MAX72XX mx = MD_MAX72XX(HARDWARE_TYPE,CS_PIN, MAX_DEVICES);
+MD_MAX72XX mx = MD_MAX72XX(HARDWARE_TYPE, CS_PIN, MAX_DEVICES);
 unsigned char board[B_Y][B_X] = {0};
 unsigned int shapes[7][4] = {{0x0F00, 0x4444, 0x0F00, 0x4444},
                              {0x8E00, 0x6440, 0x0E20, 0x44C0},
@@ -50,7 +50,6 @@ struct Player player;
 unsigned int oldTime;
 unsigned char lock = 0;
 
-
 void setup() {
     mx.begin();
     randomSeed(analogRead(0));
@@ -58,6 +57,13 @@ void setup() {
     oldTime = millis();
     render();
     delay(500);
+
+    // Renderiza paredes
+    for (int i = 0 ; i < B_X; i++) {
+        struct Pos tmp = {i, 20};
+        transformPos(&tmp);
+        mx.setPoint(tmp.x, tmp.y, 1);
+    }
 }
 
 void loop() {
@@ -116,7 +122,7 @@ void pickShape() {
     if (!player.countBag) { fillBag(player.bag); player.countBag = 28; }
 
     player.pos.y = 0;
-    if (player.shape == shapes[4][0] || player.shape == shapes[5][0] || player.shape == shapes[0][0]) { player.pos.y--; }
+    if (player.piece == 0 || player.piece == 4 || player.piece == 5) { player.pos.y--; }
 
     if (player.shape & 0x1111) { player.pos.x = (B_X - 4) / 2; }
     else if (player.shape & 0x2222) { player.pos.x = (B_X - 3) / 2; }
@@ -224,10 +230,11 @@ void render() {
             } 
         }
     }*/
+    struct Pos tmp;
     for (int i = 0; i < B_Y; i++) {
         for (int j = 0; j < B_X; j++) {
-            struct Pos tmp = {j, i};
-            tmp = transformPos(&tmp);
+            tmp = {j, i};
+            transformPos(&tmp);
             mx.setPoint(tmp.x, tmp.y, 0);
         }
     }
@@ -236,8 +243,8 @@ void render() {
     for (int i = 0; i < B_Y; i++) {
         for (int j = 0; j < B_X; j++) {
             if (board[i][j]) {
-                struct Pos tmp = {j, i};
-                tmp = transformPos(&tmp);
+                tmp = {j, i};
+                transformPos(&tmp);
                 mx.setPoint(tmp.x, tmp.y, 1);
             }
         }
@@ -248,26 +255,17 @@ void render() {
     for (int i = player.pos.y; i < player.pos.y + 4; i++) {
         for (int j = player.pos.x; j < player.pos.x + 4; j++, b = b>>1) {
             if (player.shape & b) {
-                struct Pos tmp = {j, i};
-                tmp = transformPos(&tmp);
+                tmp = {j, i};
+                transformPos(&tmp);
                 mx.setPoint(tmp.x, tmp.y, 1);
             }
         }
-    }
-
-    // Renderiza paredes
-    for (int i = 0 ; i < B_X; i++) {
-        struct Pos tmp = {i, 20};
-        tmp = transformPos(&tmp);
-        mx.setPoint(tmp.x, tmp.y, 1);
     }
 }
 
 // Recebe a posição de uma matriz normal
 // Retorna a posição correta para a matriz de leds
-struct Pos transformPos(struct Pos* p) {
-    struct Pos tmp;
-    tmp.x = M_X - p->x - 1;
-    tmp.y = M_Y - (16 * (p->y / (M_Y / MAX_DEVICES))) - M_X + p->y;
-    return tmp;
+void transformPos(struct Pos* input) {
+  input->x = 7 - input->x;
+  input->y = 24 - (16 * (input->y / 8)) + input->y;
 }
