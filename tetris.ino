@@ -284,11 +284,17 @@ void render() {
     }
 }
 
-// Recebe a posição de uma matriz normal
-// Retorna a posição correta para a matriz de leds
+// Converte coordenadas para funcionar com a matriz de leds (simulador)
 void transformPos(struct Pos* input) {
     input->x = 7 - input->x;
     input->y = 24 - (16 * (input->y / 8)) + input->y;
+}
+
+// Converte coordenadas para funcionar com a matriz de leds (hardware)
+void transformPos(struct Pos* input) {
+    char tmp = input->x;
+    input->x = 31 - input->y
+    input->y = 7 - tmp;
 }
 
 int joystick() {
