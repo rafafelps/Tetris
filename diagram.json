@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "author": "LETICIA WALGER AMARO",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "wokwi-breadboard-mini", "id": "bb1", "top": -289.4, "left": -223.2, "attrs": {} },
+    { "type": "wokwi-arduino-uno", "id": "uno", "top": 114.06, "left": -178.06, "attrs": {} },
+    {
+      "type": "wokwi-max7219-matrix",
+      "id": "m1",
+      "top": -145.55,
+      "left": 235.74,
+      "rotate": 90,
+      "attrs": { "chain": "4" }
+    },
+    {
+      "type": "wokwi-analog-joystick",
+      "id": "joystick1",
+      "top": -62.25,
+      "left": 469.24,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-lcd1602",
+      "id": "lcd1",
+      "top": -108.8,
+      "left": 34.4,
+      "attrs": { "pins": "i2c" }
+    },
+    {
+      "type": "wokwi-buzzer",
+      "id": "bz1",
+      "top": -381.6,
+      "left": -27,
+      "attrs": { "volume": "0.1" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": -225.6,
+      "left": -192.55,
+      "rotate": 90,
+      "attrs": { "value": "100" }
+    }
+  ],
+  "connections": [
+    [ "uno:GND.1", "m1:GND", "black", [ "v-12", "*", "h-16" ] ],
+    [ "uno:5V", "m1:V+", "red", [ "v12", "h-10", "*", "h-20" ] ],
+    [ "uno:10", "m1:CS", "green", [ "v-24", "*", "h-4" ] ],
+    [ "uno:11", "m1:DIN", "orange", [ "v-20", "*", "h-8" ] ],
+    [ "uno:13", "m1:CLK", "blue", [ "v-16", "*", "h-12" ] ],
+    [ "joystick1:GND", "uno:GND.2", "black", [ "v0" ] ],
+    [ "joystick1:VCC", "uno:5V", "red", [ "v0" ] ],
+    [ "joystick1:HORZ", "uno:A0", "purple", [ "v0" ] ],
+    [ "joystick1:VERT", "uno:A1", "yellow", [ "v0" ] ],
+    [ "joystick1:SEL", "uno:2", "green", [ "v0" ] ],
+    [ "lcd1:GND", "uno:GND.1", "black", [ "h0" ] ],
+    [ "lcd1:VCC", "uno:5V", "red", [ "h0" ] ],
+    [ "lcd1:SDA", "uno:A4.2", "violet", [ "h0" ] ],
+    [ "lcd1:SCL", "uno:A5.2", "white", [ "h0" ] ],
+    [ "bz1:2", "bb1:6t.b", "red", [ "v0" ] ],
+    [ "bb1:6b.j", "uno:8", "red", [ "v0" ] ],
+    [ "bz1:1", "uno:GND.1", "black", [ "v0" ] ],
+    [ "r1:1", "bb1:6t.d", "", [ "$bb" ] ],
+    [ "r1:2", "bb1:6b.h", "", [ "$bb" ] ]
+  ],
+  "dependencies": {}
+}
