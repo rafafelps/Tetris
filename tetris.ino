@@ -5,6 +5,7 @@
 #define CLK_PIN  13  // or SCK
 #define DATA_PIN 11  // or MOSI
 #define CS_PIN  10  // or SS
+#define BUZZER 8
 
 #define B_X 8
 #define B_Y 20
@@ -16,8 +17,8 @@
 #define CLICK 5
 
 struct Pos {
-	char x;
-	char y;
+  char x;
+  char y;
 };
 
 struct Player {
@@ -41,6 +42,8 @@ void render();
 void transformPos(struct Pos* input);
 int joystick();
 
+
+
 MD_MAX72XX mx = MD_MAX72XX(HARDWARE_TYPE, CS_PIN, MAX_DEVICES);
 
 unsigned char board[B_Y][B_X] = {0};
@@ -57,8 +60,10 @@ unsigned char lock = 0;
 unsigned char lastInput = 0;
 
 void setup() {
+    pinMode(BUZZER, OUTPUT);
+
     mx.begin();
-    randomSeed(analogRead(0));
+    randomSeed(analogRead(2));
     initPlayer();
     oldTime = millis();
 
@@ -79,19 +84,23 @@ void loop() {
 
     if (currentInput != lastInput) {
         if (currentInput == LEFT) {
+            playNote(600);
             player.pos.x--;
             if (collisionChecker()) { player.pos.x++; }
             else { render(); }
         }
         else if (currentInput == RIGHT) {
+            playNote(600);
             player.pos.x++;
             if (collisionChecker()) { player.pos.x--; }
             else { render(); }
         }
         else if (currentInput == UP) {
+            playNote(392);
             rotate();
         }
         else if (currentInput == DOWN) {
+            playNote(200);
             lock = 0;
         }
     }
@@ -105,13 +114,21 @@ void loop() {
     }
 
     lastInput = currentInput;
-
-    if (millis() - oldTime >= 500) {
+    unsigned int newTime = millis();
+    if (newTime - oldTime >= 500) {
         moveDown();
-        oldTime = millis();
+        oldTime = newTime;
     }
 
     delay(16);
+}
+
+//Toca uma nota t
+void playNote(int t)
+{
+    tone(BUZZER, t);
+    delay(10);
+    noTone(BUZZER);
 }
 
 // Dá valores iniciais para o jogador
@@ -177,6 +194,14 @@ void pickShape() {
             render();
             delay(500);
         }
+
+        //Som para jogo perdido
+        tone(BUZZER, 294);
+        delay(200);
+        noTone(BUZZER);
+        tone(BUZZER, 110);
+        delay(200);
+        noTone(BUZZER);
 
         delay(500);
         exit(0);
@@ -244,6 +269,13 @@ void checkCompletedRows() {
             }
             for (int j = 0; j < B_X; j++) { board[0][j] = 0; }
             i++;
+            //Som para pontuação
+            tone(BUZZER, 392);
+            delay(100);
+            noTone(BUZZER);
+            tone(BUZZER, 528);
+            delay(100);
+            noTone(BUZZER);
         }
     }
 }
@@ -285,16 +317,16 @@ void render() {
 }
 
 // Converte coordenadas para funcionar com a matriz de leds (simulador)
-void transformPos(struct Pos* input) {
+/*void transformPos(struct Pos* input) {
     input->x = 7 - input->x;
     input->y = 24 - (16 * (input->y / 8)) + input->y;
-}
+}*/
 
 // Converte coordenadas para funcionar com a matriz de leds (hardware)
 void transformPos(struct Pos* input) {
     char tmp = input->x;
-    input->x = 31 - input->y
-    input->y = 7 - tmp;
+    input->y = 31 - input->y;
+    input->x = 7 - tmp;
 }
 
 int joystick() {
@@ -304,8 +336,8 @@ int joystick() {
 
     if (analogRead(VRy) > 900) { return UP; }
     if (analogRead(VRy) < 120) { return DOWN; }
-    if (analogRead(VRx) > 900) { return LEFT; }
-    if (analogRead(VRx) < 120) { return RIGHT; }
+    if (analogRead(VRx) > 900) { return RIGHT; }
+    if (analogRead(VRx) < 120) { return LEFT; }
     if (!analogRead(SW)) { return CLICK; }
 
     return 0;
