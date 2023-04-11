@@ -62,7 +62,7 @@ void setup() {
     pinMode(BUZZER, OUTPUT);
 
     mx.begin();
-    randomSeed(analogRead(0));
+    randomSeed(analogRead(2));
     initPlayer();
     oldTime = millis();
 
@@ -112,11 +112,12 @@ void loop() {
         }
     }
 
+    unsigned int newTime = millis();
     lastInput = currentInput;
 
-    if (millis() - oldTime >= 500) {
+    if (newTime - oldTime >= 500) {
         moveDown();
-        oldTime = millis();
+        oldTime = newTime;
     }
 
     delay(16);
@@ -317,11 +318,11 @@ void transformPos(struct Pos* input) {
 // Converte coordenadas para funcionar com a matriz de leds (hardware)
 /*void transformPos(struct Pos* input) {
     char tmp = input->x;
-    input->x = 31 - input->y
-    input->y = 7 - tmp;
+    input->x = 7 - tmp;
+    input->y = 31 - input->y;
 }*/
 
-// Retorna uma direção do joystick
+// Retorna uma direção do joystick (simulador)
 int joystick() {
     const int VRx = 0;
     const int VRy = 1;
@@ -335,6 +336,21 @@ int joystick() {
 
     return 0;
 }
+
+// Retorna uma direção do joystick (hardware)
+/*int joystick() {
+    const int VRx = 0;
+    const int VRy = 1;
+    const int SW = 2;
+
+    if (analogRead(VRy) > 900) { return UP; }
+    if (analogRead(VRy) < 120) { return DOWN; }
+    if (analogRead(VRx) > 900) { return RIGHT; }
+    if (analogRead(VRx) < 120) { return LEFT; }
+    if (!analogRead(SW)) { return CLICK; }
+
+    return 0;
+}*/
 
 // Toca uma nota t
 void playNote(int t) {
