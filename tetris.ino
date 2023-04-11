@@ -1,5 +1,7 @@
 #include <MD_MAX72xx.h>
 
+#define HARDWARE 0
+
 #define HARDWARE_TYPE MD_MAX72XX::FC16_HW // PAROLA_HW
 #define MAX_DEVICES 4
 #define CLK_PIN  13  // or SCK
@@ -309,18 +311,36 @@ void render() {
     }
 }
 
+
+#if HARDWARE
+// Converte coordenadas para funcionar com a matriz de leds (hardware)
+void transformPos(struct Pos* input) {
+    char tmp = input->x;
+    input->x = 7 - tmp;
+    input->y = 31 - input->y;
+}
+
+// Retorna uma direção do joystick (hardware)
+int joystick() {
+    const int VRx = 0;
+    const int VRy = 1;
+    const int SW = 2;
+
+    if (analogRead(VRy) > 900) { return UP; }
+    if (analogRead(VRy) < 120) { return DOWN; }
+    if (analogRead(VRx) > 900) { return RIGHT; }
+    if (analogRead(VRx) < 120) { return LEFT; }
+    if (!analogRead(SW)) { return CLICK; }
+
+    return 0;
+}
+
+#else
 // Converte coordenadas para funcionar com a matriz de leds (simulador)
 void transformPos(struct Pos* input) {
     input->x = 7 - input->x;
     input->y = 24 - (16 * (input->y / 8)) + input->y;
 }
-
-// Converte coordenadas para funcionar com a matriz de leds (hardware)
-/*void transformPos(struct Pos* input) {
-    char tmp = input->x;
-    input->x = 7 - tmp;
-    input->y = 31 - input->y;
-}*/
 
 // Retorna uma direção do joystick (simulador)
 int joystick() {
@@ -337,20 +357,7 @@ int joystick() {
     return 0;
 }
 
-// Retorna uma direção do joystick (hardware)
-/*int joystick() {
-    const int VRx = 0;
-    const int VRy = 1;
-    const int SW = 2;
-
-    if (analogRead(VRy) > 900) { return UP; }
-    if (analogRead(VRy) < 120) { return DOWN; }
-    if (analogRead(VRx) > 900) { return RIGHT; }
-    if (analogRead(VRx) < 120) { return LEFT; }
-    if (!analogRead(SW)) { return CLICK; }
-
-    return 0;
-}*/
+#endif
 
 // Toca uma nota t
 void playNote(int t) {
