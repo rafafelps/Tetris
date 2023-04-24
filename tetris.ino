@@ -49,6 +49,8 @@ void transformPos(struct Pos* input);
 int joystick();
 void playNote(int t);
 void blinkArrows();
+int menuTetris();
+void(* resetFunc) (void) = 0;
 
 MD_MAX72XX mx = MD_MAX72XX(HARDWARE_TYPE, CS_PIN, MAX_DEVICES);
 LiquidCrystal_I2C lcd(0x27, 16, 2);
@@ -63,6 +65,7 @@ unsigned int shapes[7][4] = {{0x0F00, 0x4444, 0x0F00, 0x4444},
                              {0x4E00, 0x4640, 0x0E40, 0x4C40}};
 struct Player player;
 unsigned int oldTime;
+unsigned int newTime;
 unsigned char lock = 0;
 unsigned char lastInput = 0;
 unsigned char show = 0;
@@ -98,29 +101,33 @@ void setup() {
     lcd.createChar(RIGHT_ARROW, rightArrow);
     lcd.clear();
     randomSeed(analogRead(2));
+    oldTime = millis();
 
     lcd.setCursor(6,0);
     lcd.print("Game");
     lcd.setCursor(5,1);
     lcd.print("Tetris");
 
-    unsigned int clockO = millis();
-
     while (1) {
-        if (joystick() == DOWN) { break; }
-
-        unsigned int clockC = millis();
-        if (clockC - clockO >= 800) {
-            clockO = clockC;
-            blinkArrows();
+        if (joystick() == DOWN) {
+            if (menuTetris()) { break; }
+            else {
+                lcd.clear();
+                lcd.setCursor(6,0);
+                lcd.print("Game");
+                lcd.setCursor(5,1);
+                lcd.print("Tetris");
+            }
         }
+
+        blinkArrows();
+        delay(16);
     }
     lcd.clear();
 
     // Start Game //
 
     initPlayer();
-    oldTime = millis();
 
     // Renderiza paredes
     for (int i = 0 ; i < B_X; i++) {
@@ -168,7 +175,7 @@ void loop() {
         }
     }
 
-    unsigned int newTime = millis();
+    newTime = millis();
     lastInput = currentInput;
 
     if (newTime - oldTime >= 500) {
@@ -252,7 +259,7 @@ void pickShape() {
         noTone(BUZZER);
 
         delay(500);
-        exit(0);
+        resetFunc();
     }
 }
 
@@ -421,17 +428,43 @@ void playNote(int t) {
 }
 
 void blinkArrows() {
-    if (show) {
-        show = 0;
-        lcd.setCursor(0, 1);
-        lcd.print(" ");
-        lcd.setCursor(15, 1);
-        lcd.print(" ");
-    } else {
-        show = 1;
-        lcd.setCursor(0, 1);
-        lcd.write(LEFT_ARROW);
-        lcd.setCursor(15, 1);
-        lcd.write(RIGHT_ARROW);
+    newTime = millis();
+    if (newTime - oldTime >= 800) {
+        oldTime = newTime;
+        if (show) {
+            show = 0;
+            lcd.setCursor(0, 1);
+            lcd.print(" ");
+            lcd.setCursor(15, 1);
+            lcd.print(" ");
+        } else {
+            show = 1;
+            lcd.setCursor(0, 1);
+            lcd.write(LEFT_ARROW);
+            lcd.setCursor(15, 1);
+            lcd.write(RIGHT_ARROW);
+        }
     }
+}
+
+int menuTetris() {
+    lcd.clear();
+    lcd.setCursor(5,0);
+    lcd.print("Tetris");
+    lcd.setCursor(6,1);
+    lcd.print("Play");
+    unsigned choice = 0;
+
+    delay(500);
+
+    while (1) {
+        if (joystick() == DOWN) {
+            break;
+        } else if (joystick() == UP) { return 0; }
+
+        blinkArrows();
+        delay(16);
+    }
+
+    return 1;
 }
