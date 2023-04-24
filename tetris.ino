@@ -1,4 +1,5 @@
 #include <MD_MAX72xx.h>
+#include <LiquidCrystal_I2C.h>
 
 #define HARDWARE 0
 
@@ -17,6 +18,9 @@
 #define LEFT 3
 #define RIGHT 4
 #define CLICK 5
+
+#define LEFT_ARROW 0
+#define RIGHT_ARROW 1
 
 struct Pos {
 	char x;
@@ -44,8 +48,10 @@ void render();
 void transformPos(struct Pos* input);
 int joystick();
 void playNote(int t);
+void blinkArrows();
 
 MD_MAX72XX mx = MD_MAX72XX(HARDWARE_TYPE, CS_PIN, MAX_DEVICES);
+LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 unsigned char board[B_Y][B_X] = {0};
 unsigned int shapes[7][4] = {{0x0F00, 0x4444, 0x0F00, 0x4444},
@@ -59,12 +65,60 @@ struct Player player;
 unsigned int oldTime;
 unsigned char lock = 0;
 unsigned char lastInput = 0;
+unsigned char show = 0;
+
+byte leftArrow[] = {
+    0b00001,
+    0b00011,
+    0b00111,
+    0b01111,
+    0b01111,
+    0b00111,
+    0b00011,
+    0b00001
+};
+
+byte rightArrow[] = {
+    0b10000,
+    0b11000,
+    0b11100,
+    0b11110,
+    0b11110,
+    0b11100,
+    0b11000,
+    0b10000
+};
 
 void setup() {
     pinMode(BUZZER, OUTPUT);
-
     mx.begin();
+    lcd.init();
+    lcd.backlight();
+    lcd.createChar(LEFT_ARROW, leftArrow);
+    lcd.createChar(RIGHT_ARROW, rightArrow);
+    lcd.clear();
     randomSeed(analogRead(2));
+
+    lcd.setCursor(6,0);
+    lcd.print("Game");
+    lcd.setCursor(5,1);
+    lcd.print("Tetris");
+
+    unsigned int clockO = millis();
+
+    while (1) {
+        if (joystick() == DOWN) { break; }
+
+        unsigned int clockC = millis();
+        if (clockC - clockO >= 800) {
+            clockO = clockC;
+            blinkArrows();
+        }
+    }
+    lcd.clear();
+
+    // Start Game //
+
     initPlayer();
     oldTime = millis();
 
@@ -364,4 +418,20 @@ void playNote(int t) {
     tone(BUZZER, t);
     delay(10);
     noTone(BUZZER);
+}
+
+void blinkArrows() {
+    if (show) {
+        show = 0;
+        lcd.setCursor(0, 1);
+        lcd.print(" ");
+        lcd.setCursor(15, 1);
+        lcd.print(" ");
+    } else {
+        show = 1;
+        lcd.setCursor(0, 1);
+        lcd.write(LEFT_ARROW);
+        lcd.setCursor(15, 1);
+        lcd.write(RIGHT_ARROW);
+    }
 }
