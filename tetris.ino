@@ -461,10 +461,10 @@ int joystick() {
     const int VRy = 1;
     const int SW = 2;
 
-    if (analogRead(VRy) > 900) { return UP; }
-    if (analogRead(VRy) < 120) { return DOWN; }
-    if (analogRead(VRx) > 900) { return RIGHT; }
-    if (analogRead(VRx) < 120) { return LEFT; }
+    if (analogRead(VRy) > 900) { return DOWN; }
+    if (analogRead(VRy) < 120) { return UP; }
+    if (analogRead(VRx) > 900) { return LEFT; }
+    if (analogRead(VRx) < 120) { return RIGHT; }
     if (!analogRead(SW)) { return CLICK; }
 
     return 0;
@@ -574,16 +574,16 @@ unsigned short setSpeed()
     } else if (level == 9)
     {
         framesgrid = 6;
-    } else if (level >= 10 && level <= 12)
+    } else if (level <= 12)
     {
         framesgrid = 5;
-    } else if (level >= 13 && level <= 15)
+    } else if (level <= 15)
     {
         framesgrid = 4;
-    } else if (level >= 16 && level <= 18)
+    } else if (level <= 18)
     {
         framesgrid = 3;
-    } else if (level >= 19 && level <= 28)
+    } else if (level <= 28)
     {
         framesgrid = 2;
     } else 
