@@ -51,6 +51,9 @@ void playNote(int t);
 void blinkArrows();
 int menuTetris();
 void(* resetFunc) (void) = 0;
+void setLinesReq();
+void advanceLevel();
+unsigned short setSpeed();
 
 MD_MAX72XX mx = MD_MAX72XX(HARDWARE_TYPE, CS_PIN, MAX_DEVICES);
 LiquidCrystal_I2C lcd(0x27, 16, 2);
@@ -69,6 +72,12 @@ unsigned int newTime;
 unsigned char lock = 0;
 unsigned char lastInput = 0;
 unsigned char show = 0;
+unsigned int linesCleared = 0;
+unsigned char startLevel = 1; //marca se é o nível inicial ou não
+unsigned short linesRequired;
+unsigned short previousLines;
+unsigned short level = 0;
+unsigned int score = 0;
 
 byte leftArrow[] = {
     0b00001,
@@ -141,6 +150,25 @@ void setup() {
 }
 
 void loop() {
+
+    lcd.setCursor(0,0);
+    lcd.print("Level:");
+    lcd.setCursor(6,0);
+    lcd.print(level);
+    lcd.setCursor(0,1);
+    lcd.print("Score:");
+    lcd.setCursor(6,1);
+    lcd.print(score);
+    lcd.setCursor(13,0);
+    lcd.print(linesRequired);
+    lcd.setCursor(13,1);
+    lcd.print(linesCleared);
+
+    unsigned short speed;
+
+    setLinesReq();
+    speed = setSpeed();
+
     unsigned char currentInput = joystick();
     // if (joystick() == CLICK) { exit(0); }
 
@@ -150,12 +178,14 @@ void loop() {
             player.pos.x--;
             if (collisionChecker()) { player.pos.x++; }
             else { render(); }
+            delay(200);
         }
         else if (currentInput == RIGHT) {
             playNote(600);
             player.pos.x++;
             if (collisionChecker()) { player.pos.x--; }
             else { render(); }
+            delay(200);
         }
         else if (currentInput == UP) {
             playNote(392);
@@ -173,12 +203,22 @@ void loop() {
             if (!lock) { moveDown(); oldTime = millis(); }
             if (currentPiece != player.countBag) { lock = 1; }
         }
+        if (currentInput == RIGHT) {
+            player.pos.x++;
+            if (collisionChecker()) { player.pos.x--; }
+            else { render(); }
+        }
+        if (currentInput == LEFT) {
+            player.pos.x--;
+            if (collisionChecker()) { player.pos.x++; }
+            else { render(); }
+        }
     }
 
     newTime = millis();
     lastInput = currentInput;
 
-    if (newTime - oldTime >= 500) {
+    if (newTime - oldTime >= speed) {
         moveDown();
         oldTime = newTime;
     }
@@ -277,7 +317,10 @@ unsigned char collisionChecker() {
 // Move a peça para baixo e verifica/limpa fileiras completadas
 int moveDown() {
     player.pos.y++;
-
+    if (joystick()==DOWN)
+    {
+        score++;
+    }
     if (collisionChecker()) {
         player.pos.y--;
         unsigned int b = 0x8000;
@@ -310,13 +353,19 @@ void rotate() {
 
 // Verifica por linhas completadas e atualiza o score do jogador
 void checkCompletedRows() {
+    int rowsCompleted = 0;
     for (int i = B_Y - 1; i >= 0; i--) {
         int isCompleted = 1;
         for (int j = 0; j < B_X; j++) {
             if (!board[i][j]) { isCompleted = 0; break; }
         }
         if (isCompleted) {
+            rowsCompleted++;
+            linesCleared++;
+            // Linha completa some
             for (int j = 0; j < B_X; j++) { board[i][j] = 0; }
+
+            // Peças caem
             for (int k = i; k > 0; k--) {
                 for (int j = 0; j < B_X; j++) {
                     board[k][j] = board[k-1][j];
@@ -334,6 +383,31 @@ void checkCompletedRows() {
             noTone(BUZZER);
         }
     }
+
+    //Incrementa a pontuação, 4 linhas ou mais aumentam a mesma quantidade de pontos
+    switch (rowsCompleted)
+    {
+        case 0:
+        break;
+
+        case 1:
+        score += 40 * (level + 1);
+        break;
+
+        case 2:
+        score += 100 * (level + 1);
+        break;
+
+        case 3:
+        score += 300 * (level + 1);
+        break;
+
+        default:
+        score += 1200 * (level + 1);
+    }
+    
+    advanceLevel();
+
 }
 
 // Renderiza o jogo na tela
@@ -467,4 +541,56 @@ int menuTetris() {
     }
 
     return 1;
+}
+
+void setLinesReq()
+{
+    if (startLevel)
+    {
+        linesRequired = min(level*10+10, max(100,level*10-50));
+        previousLines = linesRequired;
+    } else {
+        linesRequired = previousLines + 10;
+    }
+}
+
+void advanceLevel()
+{
+    if (linesCleared >= linesRequired)
+    {
+        level++;
+        previousLines = linesRequired;
+        startLevel = 0;
+    }
+}
+
+unsigned short setSpeed()
+{
+    unsigned short framesgrid;
+
+    if (level < 9)
+    {
+        framesgrid = 48 - level*5;
+    } else if (level == 9)
+    {
+        framesgrid = 6;
+    } else if (level >= 10 && level <= 12)
+    {
+        framesgrid = 5;
+    } else if (level >= 13 && level <= 15)
+    {
+        framesgrid = 4;
+    } else if (level >= 16 && level <= 18)
+    {
+        framesgrid = 3;
+    } else if (level >= 19 && level <= 28)
+    {
+        framesgrid = 2;
+    } else 
+    {
+        framesgrid = 1;
+    }
+
+
+    return (1/(60/framesgrid))*1000;
 }
