@@ -53,6 +53,7 @@ int menuTetris();
 void(* resetFunc) (void) = 0;
 void setLinesReq();
 void advanceLevel();
+unsigned short setSpeed();
 
 MD_MAX72XX mx = MD_MAX72XX(HARDWARE_TYPE, CS_PIN, MAX_DEVICES);
 LiquidCrystal_I2C lcd(0x27, 16, 2);
@@ -163,8 +164,11 @@ void loop() {
     lcd.setCursor(13,1);
     lcd.print(linesCleared);
 
+    unsigned short speed;
+
     setLinesReq();
-    
+    speed = setSpeed();
+
     unsigned char currentInput = joystick();
     // if (joystick() == CLICK) { exit(0); }
 
@@ -174,12 +178,14 @@ void loop() {
             player.pos.x--;
             if (collisionChecker()) { player.pos.x++; }
             else { render(); }
+            delay(200);
         }
         else if (currentInput == RIGHT) {
             playNote(600);
             player.pos.x++;
             if (collisionChecker()) { player.pos.x--; }
             else { render(); }
+            delay(200);
         }
         else if (currentInput == UP) {
             playNote(392);
@@ -197,12 +203,22 @@ void loop() {
             if (!lock) { moveDown(); oldTime = millis(); }
             if (currentPiece != player.countBag) { lock = 1; }
         }
+        if (currentInput == RIGHT) {
+            player.pos.x++;
+            if (collisionChecker()) { player.pos.x--; }
+            else { render(); }
+        }
+        if (currentInput == LEFT) {
+            player.pos.x--;
+            if (collisionChecker()) { player.pos.x++; }
+            else { render(); }
+        }
     }
 
     newTime = millis();
     lastInput = currentInput;
 
-    if (newTime - oldTime >= 500) {
+    if (newTime - oldTime >= speed) {
         moveDown();
         oldTime = newTime;
     }
@@ -546,4 +562,35 @@ void advanceLevel()
         previousLines = linesRequired;
         startLevel = 0;
     }
+}
+
+unsigned short setSpeed()
+{
+    unsigned short framesgrid;
+
+    if (level < 9)
+    {
+        framesgrid = 48 - level*5;
+    } else if (level == 9)
+    {
+        framesgrid = 6;
+    } else if (level >= 10 && level <= 12)
+    {
+        framesgrid = 5;
+    } else if (level >= 13 && level <= 15)
+    {
+        framesgrid = 4;
+    } else if (level >= 16 && level <= 18)
+    {
+        framesgrid = 3;
+    } else if (level >= 19 && level <= 28)
+    {
+        framesgrid = 2;
+    } else 
+    {
+        framesgrid = 1;
+    }
+
+
+    return (1/(60/framesgrid))*1000;
 }
