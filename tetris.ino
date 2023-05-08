@@ -56,6 +56,7 @@ void(* resetFunc) (void) = 0;
 void setLinesReq();
 void advanceLevel();
 unsigned short setSpeed();
+unsigned short setDAS();
 
 MD_MAX72XX mx = MD_MAX72XX(HARDWARE_TYPE, CS_PIN, MAX_DEVICES);
 LiquidCrystal_I2C lcd(0x27, 16, 2);
@@ -79,7 +80,7 @@ unsigned char startLevel = 1; //marca se é o nível inicial ou não
 unsigned short linesRequired;
 unsigned short previousLines;
 unsigned short level = 0;
-unsigned int score = 0;
+unsigned long score = 0;
 
 byte leftArrow[] = {
     0b00001,
@@ -154,22 +155,27 @@ void setup() {
 void loop() {
 
     lcd.setCursor(0,0);
-    lcd.print("Level:");
-    lcd.setCursor(6,0);
+    lcd.print("Lvl:");
+    lcd.setCursor(4,0);
     lcd.print(level);
     lcd.setCursor(0,1);
     lcd.print("Score:");
     lcd.setCursor(6,1);
     lcd.print(score);
+    lcd.setCursor(7,0);
+    lcd.print("Lines:");
     lcd.setCursor(13,0);
-    lcd.print(linesRequired);
-    lcd.setCursor(13,1);
     lcd.print(linesCleared);
 
     unsigned short speed;
 
     setLinesReq();
     speed = setSpeed();
+
+    if (score >= 999999) //Jogo ganho
+    {
+        resetFunc();
+    }
 
     unsigned char currentInput = joystick();
     // if (joystick() == CLICK) { exit(0); }
@@ -180,14 +186,14 @@ void loop() {
             player.pos.x--;
             if (collisionChecker()) { player.pos.x++; }
             else { render(); }
-            delay(200);
+            delay(setDAS());
         }
         else if (currentInput == RIGHT) {
             playNote(600);
             player.pos.x++;
             if (collisionChecker()) { player.pos.x--; }
             else { render(); }
-            delay(200);
+            delay(setDAS());
         }
         else if (currentInput == UP) {
             playNote(392);
@@ -593,6 +599,41 @@ unsigned short setSpeed()
     {
         framesgrid = 3;
     } else if (level <= 28)
+    {
+        framesgrid = 2;
+    } else 
+    {
+        framesgrid = 1;
+    }
+
+
+    return (1/(60/framesgrid))*1000;
+}
+
+unsigned short setDAS()
+{
+    unsigned short framesgrid;
+
+    if (level <= 7 && level%2==0)
+    {
+        framesgrid = 36 - (level/2)*7;
+    } else if (level <= 7 && level%2==1)
+    {
+        framesgrid = 32 - ((level-1)/2)*7;
+    } else if (level == 8)
+    {
+        framesgrid = 7;
+    } else if (level == 9)
+    {
+        framesgrid = 5;
+    } else if (level <= 12)
+    {
+        framesgrid = 4;
+    } else if (level <= 15)
+    {
+        framesgrid = 3;
+    }
+    else if (level <= 18)
     {
         framesgrid = 2;
     } else 
