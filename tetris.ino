@@ -12,6 +12,8 @@
 
 #define B_X 8
 #define B_Y 20
+#define M_X 8
+#define M_Y 32
 
 #define UP 1
 #define DOWN 2
@@ -77,7 +79,7 @@ unsigned int linesCleared = 0;
 unsigned char startLevel = 1; //marca se é o nível inicial ou não
 unsigned short linesRequired;
 unsigned short previousLines;
-unsigned short level = 2;
+unsigned short level = 0;
 unsigned long score = 0;
 
 byte leftArrow[] = {
@@ -285,17 +287,6 @@ void pickShape() {
 
     // Logica para jogo perdido
     if (collisionChecker()) {
-        char tmpHeight = player.pos.y;
-        for (int i = 0; i < 3; i++) {
-            player.pos.y = tmpHeight;
-            render();
-            delay(500);
-
-            player.pos.y = -10;
-            render();
-            delay(500);
-        }
-
         // Som para jogo perdido
         tone(BUZZER, 294);
         delay(200);
@@ -303,6 +294,24 @@ void pickShape() {
         tone(BUZZER, 110);
         delay(200);
         noTone(BUZZER);
+
+        for (int i = 0; i < M_Y; i++) {
+            for (int j = 0; j < M_X; j++) {
+                struct Pos tmp = {j, i};
+                transformPos(&tmp);
+                mx.setPoint(tmp.x, tmp.y, 1);
+                delay(10);
+            }
+        }
+
+        for (int i = M_Y - 1; i >= 0; i--) {
+            for (int j = M_X - 1; j >= 0; j--) {
+                struct Pos tmp = {j, i};
+                transformPos(&tmp);
+                mx.setPoint(tmp.x, tmp.y, 0);
+                delay(10);
+            }
+        }
 
         delay(500);
         resetFunc();
