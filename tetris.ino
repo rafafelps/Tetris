@@ -378,8 +378,21 @@ void checkCompletedRows() {
             rowsCompleted++;
             linesCleared++;
             // Linha completa some
-            for (int j = 0; j < B_X; j++) { board[i][j] = 0; }
+            for (int k = i; k > i-rowsCompleted; k--)
+            {
+                for (int j = B_X/2; j < B_X; j++) 
+                {
+                    struct Pos tmp;
+                    tmp = {j, k};
+                    transformPos(&tmp);
+                    mx.setPoint(tmp.x, tmp.y, 0);
 
+                    tmp = {7-j,k};
+                    transformPos(&tmp);
+                    mx.setPoint(tmp.x, tmp.y, 0);
+                    delay (50);
+                }
+            }
             // Peças caem
             for (int k = i; k > 0; k--) {
                 for (int j = 0; j < B_X; j++) {
