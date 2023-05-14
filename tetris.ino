@@ -184,7 +184,6 @@ void loop() {
     }
 
     unsigned char currentInput = joystick();
-    // if (joystick() == CLICK) { exit(0); }
 
     if (currentInput != lastInput) {
         if (currentInput == LEFT) {
@@ -565,6 +564,7 @@ int menuTetris() {
     lcd.print("Tetris");
     lcd.setCursor(6,1);
     lcd.print("Play");
+    unsigned char currentOption = 0;
 
     delay(500);
 
@@ -579,6 +579,30 @@ int menuTetris() {
                 lcd.setCursor(6,1);
                 lcd.print("Play");
             }
+        } else if (currentInput == LEFT || currentInput == RIGHT) {
+            currentOption++;
+            if (currentOption > 1) { currentOption = 0; }
+
+            lcd.setCursor(0,1);
+            lcd.write(LEFT_ARROW);
+            lcd.setCursor(15,1);
+            lcd.write(RIGHT_ARROW);
+            show = 1;
+
+            lcd.setCursor(2,1);
+            for (int i = 0; i < 12; i++) {
+                lcd.print(" ");
+            }
+
+            if (currentOption == 0) {
+                lcd.setCursor(6,1);
+                lcd.print("Play");
+            } else {
+                lcd.setCursor(5,1);
+                lcd.print("Scores");
+            }
+
+            delay(200);
         } else if (currentInput == UP) { return 0; }
 
         blinkArrows();
