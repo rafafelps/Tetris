@@ -52,6 +52,8 @@ int joystick();
 void playNote(int t);
 void blinkArrows();
 int menuTetris();
+int menuDifficulty();
+void displayDifficulty(unsigned char difficulty);
 void(* resetFunc) (void) = 0;
 void setLinesReq();
 void advanceLevel();
@@ -555,20 +557,79 @@ int menuTetris() {
     lcd.print("Tetris");
     lcd.setCursor(6,1);
     lcd.print("Play");
-    unsigned choice = 0;
 
     delay(500);
 
     while (1) {
-        if (joystick() == DOWN) {
-            break;
-        } else if (joystick() == UP) { return 0; }
+        unsigned char currentInput = joystick();
+        if (currentInput == DOWN) {
+            if (menuDifficulty()) { return 1; }
+            else {
+                lcd.clear();
+                lcd.setCursor(5,0);
+                lcd.print("Tetris");
+                lcd.setCursor(6,1);
+                lcd.print("Play");
+            }
+        } else if (currentInput == UP) { return 0; }
 
         blinkArrows();
         delay(16);
     }
+}
 
-    return 1;
+int menuDifficulty() {
+    lcd.clear();
+    lcd.setCursor(3,0);
+    lcd.print("Difficulty");
+    lcd.setCursor(6,1);
+    lcd.print("Easy");
+    unsigned char difficulty = 0;
+
+    delay(500);
+
+    while (1) {
+        unsigned char currentInput = joystick();
+        if (currentInput == DOWN) {
+            if (difficulty == 0) { level = 0; } // Easy
+            else if (difficulty == 1) { level = 5; } // Medium
+            else { level = 10; } // Hard
+            return 1;
+        } else if (currentInput == LEFT) {
+            // Scroll leftToright
+            difficulty--;
+            if (difficulty > 2) { difficulty = 2; }
+
+            displayDifficulty(difficulty);
+
+            delay(200);
+        } else if (currentInput == RIGHT) {
+            // Scroll rightToleft
+            difficulty++;
+            if (difficulty > 2) { difficulty = 0; }
+
+            displayDifficulty(difficulty);
+
+            delay(200);
+        } else if (currentInput == UP) { return 0; }
+
+        blinkArrows();
+        delay(16);
+    }
+}
+
+void displayDifficulty(unsigned char difficulty) {
+    lcd.setCursor(0,1);
+    lcd.write(LEFT_ARROW);
+    lcd.setCursor(15,1);
+    lcd.write(RIGHT_ARROW);
+    lcd.setCursor(2,1);
+    show = 1;
+    for (int i = 0; i < 12; i++) { lcd.print(" "); }
+
+    if (difficulty == 0) { lcd.setCursor(6,1); lcd.print("Easy"); }
+    else if (difficulty == 1) { lcd.setCursor(5,1); lcd.print("Medium"); }
+    else { lcd.setCursor(6,1); lcd.print("Hard"); }
 }
 
 void setLinesReq()
