@@ -176,6 +176,10 @@ void loop() {
 
     if (score >= 999999) //Jogo ganho
     {
+        lcd.clear();
+        lcd.setCursor(4,0);
+        lcd.print("You Win!");
+        delay(500);
         resetFunc();
     }
 
@@ -289,6 +293,10 @@ void pickShape() {
 
     // Logica para jogo perdido
     if (collisionChecker()) {
+        lcd.clear();
+        lcd.setCursor(3,0);
+        lcd.print("You Lost!");
+
         // Som para jogo perdido
         tone(BUZZER, 294);
         delay(200);
