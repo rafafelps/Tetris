@@ -198,6 +198,7 @@ void playNote(int t);
 void blinkArrows();
 int menuTetris();
 int menuDifficulty();
+void menuScores();
 void displayDifficulty(unsigned char difficulty);
 void(* resetFunc) (void) = 0;
 void setLinesReq();
@@ -692,17 +693,25 @@ int menuTetris() {
     while (1) {
         unsigned char currentInput = joystick();
 
-        playSong();
+        //playSong();
 
         if (currentInput == DOWN) {
-            if (menuDifficulty()) { return 1; }
-            else {
-                lcd.clear();
-                lcd.setCursor(5,0);
-                lcd.print("Tetris");
+            if (!currentOption && menuDifficulty()) { return 1; }
+            else if (currentOption) { menuScores(); }
+
+            lcd.clear();
+            lcd.setCursor(5,0);
+            lcd.print("Tetris");
+
+            if (!currentOption) {
                 lcd.setCursor(6,1);
                 lcd.print("Play");
+            } else if (currentOption) {
+                lcd.setCursor(5, 1);
+                lcd.print("Scores");
             }
+
+            delay(200);
         } else if (currentInput == LEFT || currentInput == RIGHT) {
             currentOption++;
             if (currentOption > 1) { currentOption = 0; }
@@ -731,8 +740,6 @@ int menuTetris() {
 
         blinkArrows();
         delay(16);
-
-        
     }
 }
 
@@ -749,7 +756,7 @@ int menuDifficulty() {
     while (1) {
         unsigned char currentInput = joystick();
 
-        playSong();
+        //playSong();
 
         if (currentInput == DOWN) {
             if (difficulty == 0) { level = 0; } // Easy
@@ -773,6 +780,28 @@ int menuDifficulty() {
 
             delay(200);
         } else if (currentInput == UP) { return 0; }
+
+        blinkArrows();
+        delay(16);
+    }
+}
+
+void menuScores() {
+    lcd.clear();
+    lcd.setCursor(5,0);
+    lcd.print("Scores");
+    lcd.setCursor(1,1);
+    lcd.print("1RAFAEL:999999");
+    unsigned char scr = 0;
+
+    delay(500);
+
+    while (1) {
+        unsigned char currentInput = joystick();
+
+        //playSong();
+
+        if (currentInput == UP) { return; }
 
         blinkArrows();
         delay(16);
