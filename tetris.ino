@@ -1,5 +1,6 @@
 #include <MD_MAX72xx.h>
 #include <LiquidCrystal_I2C.h>
+#include <EEPROM.h>
 
 #define HARDWARE 0
 
@@ -181,13 +182,10 @@ struct Player {
     unsigned int shape;
     unsigned char rotation;
     unsigned char piece;
-    unsigned char bag[28];
-    unsigned char countBag;
+    unsigned char nextPiece;
 };
 
 void initPlayer();
-void fillBag(unsigned char* bag);
-void shuffle(unsigned char *array, size_t n);
 void pickShape();
 unsigned char collisionChecker();
 int moveDown();
@@ -255,8 +253,6 @@ byte rightArrow[] = {
 };
 
 void setup() {
-
-
     pinMode(BUZZER, OUTPUT);
     mx.begin();
     lcd.init();
@@ -264,7 +260,7 @@ void setup() {
     lcd.createChar(LEFT_ARROW, leftArrow);
     lcd.createChar(RIGHT_ARROW, rightArrow);
     lcd.clear();
-    randomSeed(analogRead(2));
+    randomSeed(EEPROM.read(0));
     oldTime = millis();
 
     lcd.setCursor(6,0);
@@ -290,7 +286,6 @@ void setup() {
     lcd.clear();
 
     // Start Game //
-
     initPlayer();
 
     // Renderiza paredes
@@ -360,11 +355,11 @@ void loop() {
         }
     }
 
-    unsigned int currentPiece = player.countBag;
+    unsigned char currentPiece = player.piece;
     if (currentInput == lastInput) {
         if (currentInput == DOWN) {
             if (!lock) { moveDown(); oldTime = millis(); }
-            if (currentPiece != player.countBag) { lock = 1; }
+            if (currentPiece != player.piece) { lock = 1; }
         }
         if (currentInput == RIGHT) {
             player.pos.x++;
@@ -391,47 +386,23 @@ void loop() {
 
 // Dá valores iniciais para o jogador
 void initPlayer() {
+    EEPROM.update(0, random(256));
+
     player.shape = 0;
     player.rotation = 0;
     player.piece = 0;
-    player.countBag = 28;
+    player.nextPiece = random(7);
 
-    fillBag(player.bag);
     pickShape();
-}
-
-// Preenche a seleção de peças que o jogador vai receber
-void fillBag(unsigned char* bag) {
-    unsigned char count = 0;
-    for (int i = 0; i < 7; i++) {
-        for (int j = 0; j < 4; j++)
-            bag[count++] = i;
-    }
-    for (int i = 0; i < 10; i++) { shuffle(bag, 28); }
-}
-
-// Aleatoriza os valores de um vetor
-void shuffle(unsigned char *array, size_t n) {
-    if (n > 1) {
-        size_t i;
-        for (i = 0; i < n - 1; i++) {
-            size_t j = i + rand() / (RAND_MAX / (n - i) + 1);
-            int t = array[j];
-            array[j] = array[i];
-            array[i] = t;
-        }
-    }
 }
 
 // Seleciona a próxima peça do jogador (e testa para ver se perdeu o jogo)
 void pickShape() {
-    player.countBag--;
     player.rotation = 0;
     
-    player.piece = player.bag[player.countBag];
+    player.piece = player.nextPiece;
+    player.nextPiece = random(7);
     player.shape = shapes[player.piece][player.rotation];
-
-    if (!player.countBag) { fillBag(player.bag); player.countBag = 28; }
 
     player.pos.y = 0;
     if (player.piece == 0 || player.piece == 4 || player.piece == 5) { player.pos.y--; }
