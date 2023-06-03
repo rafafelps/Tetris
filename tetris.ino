@@ -1037,7 +1037,6 @@ void sortPositions(unsigned int* scores) {
 void displayScore(struct Score* score) {
     unsigned char length;
     for (length = 0; score->name[length] != '\0'; length++) {}
-    length--;
 
     lcd.setCursor(1,1);
     for (int i = 0; i < 14; i++) {
@@ -1047,21 +1046,12 @@ void displayScore(struct Score* score) {
     unsigned char digits = countDigits(score->score);
     unsigned char totalLength = length + digits + 2;
 
-    if (totalLength >= 14) {
-        lcd.setCursor(1,1);
-        for (int i = 0; i < length; length++) {
-            lcd.print(score->name[i]);
-        }    
-        lcd.print(":");
-        lcd.print(score->score);
-    } else {
-        lcd.setCursor((14 - totalLength) / 2, 1);
-        for (int i = 0; i < length; i++) {
-            lcd.print(score->name[i]);
-        }
-        lcd.print(": ");
-        lcd.print(score->score);
+    lcd.setCursor((16 - totalLength) / 2, 1);
+    for (int i = 0; i < length; i++) {
+        lcd.print(score->name[i]);
     }
+    lcd.print(": ");
+    lcd.print(score->score);
 }
 
 unsigned char countDigits(unsigned long num) {
