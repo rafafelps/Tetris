@@ -119,7 +119,7 @@
 #define REST 0
 
 // change this to make the song slower or faster
-int tempo=200; 
+int tempo=160; 
 
 // notes of the moledy followed by the duration.
 // a 4 means a quarter note, 8 an eighteenth , 16 sixteenth, so on
@@ -185,6 +185,11 @@ struct Player {
     unsigned char nextPiece;
 };
 
+struct Score {
+    unsigned long score;
+    char name[7];
+};
+
 void initPlayer();
 void pickShape();
 unsigned char collisionChecker();
@@ -206,6 +211,9 @@ void advanceLevel();
 unsigned short setSpeed();
 unsigned short setDAS();
 void playSong();
+void sortPositions(unsigned int* scores);
+void displayScore(struct Score* score);
+unsigned char countDigits(unsigned int num);
 
 MD_MAX72XX mx = MD_MAX72XX(HARDWARE_TYPE, CS_PIN, MAX_DEVICES);
 LiquidCrystal_I2C lcd(0x27, 16, 2);
@@ -787,12 +795,45 @@ int menuDifficulty() {
 }
 
 void menuScores() {
+    unsigned int scorePositions[10] = {1, 12, 23, 34, 45, 56, 67, 78, 89, 100};
+
+    EEPROM.put(1, (unsigned long)(694200));
+    EEPROM.update(5, 'R');
+    EEPROM.update(6, 'A');
+    EEPROM.update(7, 'F');
+    EEPROM.update(8, 'A');
+    EEPROM.update(9, 'E');
+    EEPROM.update(10, 'L');
+    EEPROM.update(11, '\0');;
+
+
+    memoryValidator();
+    sortPositions(scorePositions);
+
+    unsigned char maxValidScorePosition = 0;
+    struct Score scores[10];
+    for (int i = 0; i < 10; i++) {
+        EEPROM.get(scorePositions[i], scores[i].score);
+        if (!scores[i].score) { maxValidScorePosition = i; break; }
+        for (int j = 0; j < 7; j++) {
+            scores[i].name[j] = EEPROM.read(scorePositions[i] + j + 4);
+        }
+    }
+
     lcd.clear();
     lcd.setCursor(5,0);
     lcd.print("Scores");
-    lcd.setCursor(1,1);
-    lcd.print("1RAFAEL:999999");
-    unsigned char scr = 0;
+
+    unsigned char currScore = 0;
+    unsigned char anyScores = 0;
+    if (!scores[currScore].score) {
+        lcd.setCursor(3,1);
+        lcd.print("No Scores!");
+        
+    } else {
+        displayScore(&scores[currScore]);
+        anyScores = 1;
+    }
 
     delay(500);
 
@@ -802,6 +843,21 @@ void menuScores() {
         //playSong();
 
         if (currentInput == UP) { return; }
+        else if (currentInput == LEFT) {
+            currScore--;
+            if (currScore > maxValidScorePosition) { currScore = maxValidScorePosition; }
+            if (anyScores) {
+                displayScore(&scores[currScore]);
+            }
+            delay(200);
+        } else if (currentInput == RIGHT) {
+            currScore++;
+            if (currScore > maxValidScorePosition) { currScore = 0; }
+            if (anyScores) {
+                displayScore(&scores[currScore]);   
+            }
+            delay(200);
+        }
 
         blinkArrows();
         delay(16);
@@ -942,12 +998,78 @@ void playSong()
     noTone(BUZZER);
 
     lastNote = thisNote;
-
-    
   }
   
   if (thisNote == notes * 2)
     {
         lastNote =0;
     }
+}
+
+void memoryValidator() {
+    for (int i = 11; i <= 110; i += 11) {
+        if (EEPROM.read(i) != '\0') {
+            EEPROM.update(i, '\0');
+            EEPROM.put(i - 10, (unsigned long)(0));
+        }
+    }
+}
+
+void sortPositions(unsigned int* scores) {
+    int n = 10;
+    unsigned char i, j;
+    unsigned long key;
+
+    for (i = 1; i < n; i++) {
+        EEPROM.get(scores[i], key);
+        j = i - 1;
+ 
+        unsigned long subKey;
+        EEPROM.get(scores[j], subKey);
+        while (j >= 0 && subKey < key) {
+            scores[j + 1] = scores[j];
+            j--;
+        }
+        scores[j + 1] = i;
+    }
+}
+
+void displayScore(struct Score* score) {
+    unsigned char length;
+    for (length = 0; score->name[length] != '\0'; length++) {}
+    length--;
+
+    lcd.setCursor(1,1);
+    for (int i = 0; i < 14; i++) {
+        lcd.print(" ");
+    }
+
+    unsigned char digits = countDigits(score->score);
+    unsigned char totalLength = length + digits + 2;
+
+    if (totalLength >= 14) {
+        lcd.setCursor(1,1);
+        for (int i = 0; i < length; length++) {
+            lcd.print(score->name[i]);
+        }    
+        lcd.print(":");
+        lcd.print(score->score);
+    } else {
+        lcd.setCursor((14 - totalLength) / 2, 1);
+        for (int i = 0; i < length; i++) {
+            lcd.print(score->name[i]);
+        }
+        lcd.print(": ");
+        lcd.print(score->score);
+    }
+}
+
+unsigned char countDigits(unsigned long num) {
+    unsigned char count = 1;
+    unsigned long comparison = 10;
+    while (comparison <= num) {
+        comparison *= 10;
+        count++;
+    }
+    return count;
 }
