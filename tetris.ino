@@ -334,6 +334,32 @@ void loop() {
         lcd.clear();
         lcd.setCursor(4,0);
         lcd.print("You Win!");
+        tone(BUZZER, 700);
+        delay(200);
+        noTone(BUZZER);
+        tone(BUZZER, 800);
+        delay(200);
+        noTone(BUZZER);
+
+        for (int i = 0; i < M_Y; i++) {
+            for (int j = 0; j < M_X; j++) {
+                struct Pos tmp = {j, i};
+                transformPos(&tmp);
+                mx.setPoint(tmp.x, tmp.y, 1);
+                delay(10);
+            }
+        }
+
+        for (int i = M_Y - 1; i >= 0; i--) {
+            for (int j = M_X - 1; j >= 0; j--) {
+                struct Pos tmp = {j, i};
+                transformPos(&tmp);
+                mx.setPoint(tmp.x, tmp.y, 0);
+                delay(10);
+            }
+        }
+
+        menuSaveScore();
         delay(500);
         resetFunc();
     }
