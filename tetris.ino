@@ -1098,11 +1098,15 @@ void menuSaveScore() {
             if (currLetter == 'A') { currLetter = '_'; }
             else if (currLetter == '_') { currLetter = 'Z'; }
             else { currLetter--; }
+            lcd.print(currLetter);
+            lcd.setCursor((16 - cursor) / 2 + cursor, 1);
             delay(200);
         } else if (currentInput == RIGHT) {
             if (currLetter == 'Z') { currLetter = '_'; }
             else if (currLetter == '_') { currLetter = 'A'; }
             else { currLetter++; }
+            lcd.print(currLetter);
+            lcd.setCursor((16 - cursor) / 2 + cursor, 1);
             delay(200);
         } else if (currentInput == UP) {
             
