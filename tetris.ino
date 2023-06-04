@@ -705,7 +705,7 @@ int menuTetris() {
     while (1) {
         unsigned char currentInput = joystick();
 
-        //playSong();
+        playSong();
 
         if (currentInput == DOWN) {
             if (!currentOption && menuDifficulty()) { return 1; }
@@ -768,7 +768,7 @@ int menuDifficulty() {
     while (1) {
         unsigned char currentInput = joystick();
 
-        //playSong();
+        playSong();
 
         if (currentInput == DOWN) {
             if (difficulty == 0) { level = 0; } // Easy
@@ -834,7 +834,7 @@ void menuScores() {
     while (1) {
         unsigned char currentInput = joystick();
 
-        //playSong();
+        playSong();
 
         if (currentInput == UP) { return; }
         else if (currentInput == LEFT) {
