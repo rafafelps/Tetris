@@ -1111,7 +1111,14 @@ void menuSaveScore() {
         } else if (currentInput == UP) {
             
         } else if (currentInput == DOWN) {
-            
+            name[cursor] = currLetter;
+            cursor++;
+            lcd.setCursor((16 - cursor) / 2, 1);
+            for (int i = 0; i < cursor; i++) {
+                lcd.print(name[i]);
+            }
+            lcd.setCursor((16 - cursor) / 2 + cursor, 1);
+            delay(400);
         }
 
         if (!show) { lcd.print(' '); lcd.setCursor((16 - cursor) / 2 + cursor, 1); }
