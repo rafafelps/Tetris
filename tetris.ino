@@ -1100,19 +1100,82 @@ void menuSaveScore() {
             else { currLetter--; }
             lcd.print(currLetter);
             lcd.setCursor((16 - cursor) / 2 + cursor, 1);
-            delay(200);
+            delay(400);
         } else if (currentInput == RIGHT) {
             if (currLetter == 'Z') { currLetter = '_'; }
             else if (currLetter == '_') { currLetter = 'A'; }
             else { currLetter++; }
             lcd.print(currLetter);
             lcd.setCursor((16 - cursor) / 2 + cursor, 1);
-            delay(200);
+            delay(400);
         } else if (currentInput == UP) {
             
         } else if (currentInput == DOWN) {
-            name[cursor] = currLetter;
-            cursor++;
+            if (currLetter == '_') {
+                if (!cursor) {
+                    if (cancelMenu()) { return; }
+                    else {
+                        lcd.clear();
+                        lcd.setCursor(2,0);
+                        lcd.print("Player Name:");
+                        lcd.setCursor((16 - cursor) / 2, 1);
+                        for (int i = 0; name[i] != '\0'; i++) {
+                            lcd.print(name[i]);
+                        }
+                        lcd.setCursor((16 - cursor) / 2 + cursor, 1);
+
+                        delay(500);
+                        continue;
+                    }
+                }
+                if (confirmMenu(name)) {
+                    EEPROM.put(scorePositions[writePos], score);
+                    int i;
+                    for (i = 0; name[i] != '\0'; i++) {
+                        EEPROM.update(scorePositions[writePos] + i + 1, name[i]);
+                    }
+                    EEPROM.update(scorePositions[writePos] + i + 1, '\0');
+                    return;
+                } else {
+                    lcd.clear();
+                    lcd.setCursor(2,0);
+                    lcd.print("Player Name:");
+                    lcd.setCursor((16 - cursor) / 2, 1);
+                    for (int i = 0; name[i] != '\0'; i++) {
+                        lcd.print(name[i]);
+                    }
+                    lcd.setCursor((16 - cursor) / 2 + cursor, 1);
+
+                    delay(500);
+                    continue;
+                }
+            }
+            
+            name[cursor++] = currLetter;
+            currLetter = 'A';
+
+            if (cursor > 5) {
+                if (confirmMenu(name)) {
+                    EEPROM.put(scorePositions[writePos], score);
+                    int i;
+                    for (i = 0; name[i] != '\0'; i++) {
+                        EEPROM.update(scorePositions[writePos] + i + 1, name[i]);
+                    }
+                    EEPROM.update(scorePositions[writePos] + i + 1, '\0');
+                    return;
+                } else {
+                    cursor--;
+                    lcd.clear();
+                    lcd.setCursor(2,0);
+                    lcd.print("Player Name:");
+                    lcd.setCursor((16 - cursor) / 2, 1);
+                    for (int i = 0; name[i] != '\0'; i++) {
+                        lcd.print(name[i]);
+                    }
+                    lcd.setCursor((16 - cursor) / 2 + cursor, 1);
+                }
+            }
+
             lcd.setCursor((16 - cursor) / 2, 1);
             for (int i = 0; i < cursor; i++) {
                 lcd.print(name[i]);
@@ -1135,6 +1198,11 @@ int cancelMenu() {
     lcd.clear();
     lcd.setCursor(5,0);
     lcd.print("Exit?");
+
+    lcd.setCursor(7,1);
+    lcd.print("No");
+
+    delay(500);
 
     while (1) {
         unsigned char currentInput = joystick();
@@ -1181,6 +1249,8 @@ int cancelMenu() {
 }
 
 int confirmMenu(char* name) {
+    lcd.clear();
+
     unsigned char length;
     for (length = 0; name[length] != '\0'; length++) {}
     unsigned char totalLength = 7 + length;
@@ -1190,14 +1260,18 @@ int confirmMenu(char* name) {
     for (int i = 0; name[i] != '\0'; i++) { lcd.print(name[i]); }
     lcd.print("?");
 
+    lcd.setCursor(6,1);
+    lcd.print("Yes");
     unsigned char choice = 1;
+
+    delay(500);
 
     while (1) {
         unsigned char currentInput = joystick();
 
         if (currentInput == LEFT) {
             choice--;
-            if (choice > 2) { choice = 1; }
+            if (choice > 1) { choice = 1; }
 
             lcd.setCursor(1,1);
             for (int i = 0; i < 12; i++) {
@@ -1214,7 +1288,7 @@ int confirmMenu(char* name) {
             delay(200);
         } else if (currentInput == RIGHT) {
             choice++;
-            if (choice > 2) { choice = 0; }
+            if (choice > 1) { choice = 0; }
 
             lcd.setCursor(1,1);
             for (int i = 0; i < 12; i++) {
