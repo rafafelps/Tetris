@@ -263,7 +263,6 @@ byte rightArrow[] = {
 };
 
 void setup() {
-    Serial.begin(9600);
     pinMode(BUZZER, OUTPUT);
     mx.begin();
     lcd.init();
