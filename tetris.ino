@@ -838,18 +838,32 @@ void menuScores() {
 
         if (currentInput == UP) { return; }
         else if (currentInput == LEFT) {
+            lcd.setCursor(0,1);
+            lcd.write(LEFT_ARROW);
+            lcd.setCursor(15,1);
+            lcd.write(RIGHT_ARROW);
+            show = 1;
+
             currScore--;
             if (currScore > maxValidScorePosition) { currScore = maxValidScorePosition; }
             if (anyScores) {
                 displayScore(&scores[currScore]);
             }
+
             delay(200);
         } else if (currentInput == RIGHT) {
+            lcd.setCursor(0,1);
+            lcd.write(LEFT_ARROW);
+            lcd.setCursor(15,1);
+            lcd.write(RIGHT_ARROW);
+            show = 1;
+
             currScore++;
             if (currScore > maxValidScorePosition) { currScore = 0; }
             if (anyScores) {
                 displayScore(&scores[currScore]);   
             }
+
             delay(200);
         }
 
@@ -1109,7 +1123,37 @@ void menuSaveScore() {
             lcd.setCursor((16 - cursor) / 2 + cursor, 1);
             delay(400);
         } else if (currentInput == UP) {
-            
+            if (!cursor) {
+                if (cancelMenu()) { return; }
+                else {
+                    lcd.clear();
+                    lcd.setCursor(2,0);
+                    lcd.print("Player Name:");
+                    lcd.setCursor((16 - cursor) / 2, 1);
+                    for (int i = 0; name[i] != '\0'; i++) {
+                        lcd.print(name[i]);
+                    }
+                    lcd.setCursor((16 - cursor) / 2 + cursor, 1);
+
+                    delay(500);
+                    continue;
+                }
+            }
+
+            name[cursor--] = '\0';
+            currLetter = name[cursor];
+
+            lcd.setCursor(1,1);
+            for (int i = 0; i < 12; i++) {
+                lcd.print(" ");
+            }
+
+            lcd.setCursor((16 - cursor) / 2, 1);
+            for (int i = 0; name[i] != '\0'; i++) {
+                lcd.print(name[i]);
+            }
+            lcd.setCursor((16 - cursor) / 2 + cursor, 1);
+            delay(200);
         } else if (currentInput == DOWN) {
             if (currLetter == '_') {
                 if (!cursor) {
@@ -1207,24 +1251,13 @@ int cancelMenu() {
     while (1) {
         unsigned char currentInput = joystick();
 
-        if (currentInput == LEFT) {
-            choice--;
-            if (choice > 1) { choice = 1; }
+        if (currentInput == LEFT || currentInput == RIGHT) {
+            lcd.setCursor(0,1);
+            lcd.write(LEFT_ARROW);
+            lcd.setCursor(15,1);
+            lcd.write(RIGHT_ARROW);
+            show = 1;
 
-            lcd.setCursor(1,1);
-            for (int i = 0; i < 12; i++) {
-                lcd.print(" ");
-            }
-
-            if (!choice) {
-                lcd.setCursor(7,1);
-                lcd.print("No");
-            } else {
-                lcd.setCursor(6,1);
-                lcd.print("Yes");
-            }
-            delay(200);
-        } else if (currentInput == RIGHT) {
             choice++;
             if (choice > 1) { choice = 0; }
 
@@ -1240,6 +1273,7 @@ int cancelMenu() {
                 lcd.setCursor(6,1);
                 lcd.print("Yes");
             }
+
             delay(200);
         } else if (currentInput == DOWN) { return choice; }
 
@@ -1269,24 +1303,13 @@ int confirmMenu(char* name) {
     while (1) {
         unsigned char currentInput = joystick();
 
-        if (currentInput == LEFT) {
-            choice--;
-            if (choice > 1) { choice = 1; }
+        if (currentInput == LEFT || currentInput == RIGHT) {
+            lcd.setCursor(0,1);
+            lcd.write(LEFT_ARROW);
+            lcd.setCursor(15,1);
+            lcd.write(RIGHT_ARROW);
+            show = 1;
 
-            lcd.setCursor(1,1);
-            for (int i = 0; i < 12; i++) {
-                lcd.print(" ");
-            }
-
-            if (!choice) {
-                lcd.setCursor(7,1);
-                lcd.print("No");
-            } else {
-                lcd.setCursor(6,1);
-                lcd.print("Yes");
-            }
-            delay(200);
-        } else if (currentInput == RIGHT) {
             choice++;
             if (choice > 1) { choice = 0; }
 
@@ -1302,6 +1325,7 @@ int confirmMenu(char* name) {
                 lcd.setCursor(6,1);
                 lcd.print("Yes");
             }
+
             delay(200);
         } else if (currentInput == DOWN) { return choice; }
 
