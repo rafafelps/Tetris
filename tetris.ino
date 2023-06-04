@@ -213,7 +213,8 @@ unsigned short setDAS();
 void playSong();
 void sortPositions(unsigned int* scores);
 void displayScore(struct Score* score);
-unsigned char countDigits(unsigned int num);
+unsigned char countDigits(unsigned long num);
+void menuSaveScore();
 
 MD_MAX72XX mx = MD_MAX72XX(HARDWARE_TYPE, CS_PIN, MAX_DEVICES);
 LiquidCrystal_I2C lcd(0x27, 16, 2);
@@ -262,6 +263,7 @@ byte rightArrow[] = {
 };
 
 void setup() {
+    Serial.begin(9600);
     pinMode(BUZZER, OUTPUT);
     mx.begin();
     lcd.init();
@@ -451,6 +453,8 @@ void pickShape() {
                 delay(10);
             }
         }
+
+        menuSaveScore();
 
         delay(500);
         resetFunc();
@@ -797,16 +801,6 @@ int menuDifficulty() {
 void menuScores() {
     unsigned int scorePositions[10] = {1, 12, 23, 34, 45, 56, 67, 78, 89, 100};
 
-    EEPROM.put(1, (unsigned long)(694200));
-    EEPROM.update(5, 'R');
-    EEPROM.update(6, 'A');
-    EEPROM.update(7, 'F');
-    EEPROM.update(8, 'A');
-    EEPROM.update(9, 'E');
-    EEPROM.update(10, 'L');
-    EEPROM.update(11, '\0');;
-
-
     memoryValidator();
     sortPositions(scorePositions);
 
@@ -814,7 +808,7 @@ void menuScores() {
     struct Score scores[10];
     for (int i = 0; i < 10; i++) {
         EEPROM.get(scorePositions[i], scores[i].score);
-        if (!scores[i].score) { maxValidScorePosition = i; break; }
+        if (!scores[i].score) { maxValidScorePosition = i - 1; break; }
         for (int j = 0; j < 7; j++) {
             scores[i].name[j] = EEPROM.read(scorePositions[i] + j + 4);
         }
@@ -1015,22 +1009,18 @@ void memoryValidator() {
     }
 }
 
-void sortPositions(unsigned int* scores) {
-    int n = 10;
-    unsigned char i, j;
-    unsigned long key;
-
-    for (i = 1; i < n; i++) {
-        EEPROM.get(scores[i], key);
-        j = i - 1;
- 
-        unsigned long subKey;
-        EEPROM.get(scores[j], subKey);
-        while (j >= 0 && subKey < key) {
-            scores[j + 1] = scores[j];
-            j--;
+void sortPositions(unsigned int* scorePositions) {
+    unsigned long a, b;
+    for (int j = 0; j < 9; j++) {
+        for (int i = 0; i < 9 - j; i++) {
+            EEPROM.get(scorePositions[i], a);
+            EEPROM.get(scorePositions[i+1], b);
+            if (a < b) {
+                unsigned int tmp = scorePositions[i+1];
+                scorePositions[i+1] = scorePositions[i];
+                scorePositions[i] = tmp;
+            }
         }
-        scores[j + 1] = i;
     }
 }
 
@@ -1062,4 +1052,216 @@ unsigned char countDigits(unsigned long num) {
         count++;
     }
     return count;
+}
+
+void menuSaveScore() {
+    if (!score) { return; }
+
+    unsigned int scorePositions[10] = {1, 12, 23, 34, 45, 56, 67, 78, 89, 100};
+
+    memoryValidator();
+    sortPositions(scorePositions);
+
+    unsigned char maxValidScorePosition = 0;
+    struct Score scores[10];
+    for (int i = 0; i < 10; i++) {
+        EEPROM.get(scorePositions[i], scores[i].score);
+        if (!scores[i].score) { maxValidScorePosition = i - 1; break; }
+        for (int j = 0; j < 7; j++) {
+            scores[i].name[j] = EEPROM.read(scorePositions[i] + j + 4);
+        }
+    }
+
+    unsigned int writePos = 0;
+    if (maxValidScorePosition > -1) {
+        writePos = maxValidScorePosition;
+    }
+
+    if (score < scores[maxValidScorePosition].score) { return 0; }
+
+    lcd.clear();
+    lcd.setCursor(2,0);
+    lcd.print("Player Name:");
+    
+    unsigned char cursor = 0;
+    unsigned char currLetter = 'A';
+    char name[7] = {'\0'};
+
+    lcd.setCursor((16 - cursor) / 2 - cursor, 1);
+
+    delay(500);
+
+    while (1) {
+        unsigned char currentInput = joystick();
+
+        if (currentInput == LEFT) {
+            if (currLetter == 'A') { currLetter = ' '; }
+            else if (currLetter == ' ') { currLetter = 'Z'; }
+            else { currLetter--; }
+            delay(200);
+        } else if (currentInput == RIGHT) {
+            if (currLetter == 'Z') { currLetter = ' '; }
+            else if (currLetter == ' ') { currLetter = 'A'; }
+            else { currLetter++; }
+            delay(200);
+        } else if (currentInput == UP) {
+            name[cursor] = '\0';
+            cursor--;
+            if (cursor > 5) {
+                if (cancelMenu()) { return; }
+                cursor = 0;
+                currLetter = 'A';
+
+                lcd.clear();
+                lcd.setCursor(2,0);
+                lcd.print("Player Name:");
+                lcd.setCursor((16 - cursor) / 2, 1);
+                for (int i = 0; name[i] != '\0'; i++) {
+                    lcd.print(name[i]);
+                }
+                lcd.setCursor((16 - cursor) / 2 - cursor, 1);
+                delay(500);
+            } else { currLetter = name[cursor]; }
+        } else {
+            name[cursor] = currLetter;
+            cursor++;
+            if (cursor > 6) {
+                if (confirmMenu(name)) {
+                    EEPROM.put(scorePositions[writePos], score);
+                    int i;
+                    for (i = 0; name[i] != '\0'; i++) {
+                        EEPROM.update(scorePositions[writePos] + i + 1, name[i]);
+                    }
+                    EEPROM.update(scorePositions[writePos] + i + 1, '\0');
+                    return;
+                } else {
+                    cursor--;
+
+                    lcd.clear();
+                    lcd.setCursor(2,0);
+                    lcd.print("Player Name:");
+                    lcd.setCursor((16 - cursor) / 2, 1);
+                    for (int i = 0; name[i] != '\0'; i++) {
+                        lcd.print(name[i]);
+                    }
+                    lcd.setCursor((16 - cursor) / 2 - cursor, 1);
+
+                    delay(500);
+                }
+            } else { currLetter = 'A'; }
+        }
+
+        if (!show) { lcd.print(' '); lcd.setCursor((16 - cursor) / 2 - cursor, 1); }
+        else { lcd.print(currLetter); lcd.setCursor((16 - cursor) / 2 - cursor, 1); }
+
+        blinkArrows();
+        delay(16);
+    }
+}
+
+int cancelMenu() {
+    unsigned char choice = 0;
+
+    lcd.clear();
+    lcd.setCursor(5,0);
+    lcd.print("Exit?");
+
+    while (1) {
+        unsigned char currentInput = joystick();
+
+        if (currentInput == LEFT) {
+            choice--;
+            if (choice > 1) { choice = 1; }
+
+            lcd.setCursor(1,1);
+            for (int i = 0; i < 12; i++) {
+                lcd.print(" ");
+            }
+
+            if (!choice) {
+                lcd.setCursor(7,1);
+                lcd.print("No");
+            } else {
+                lcd.setCursor(6,1);
+                lcd.print("Yes");
+            }
+        } else if (currentInput == RIGHT) {
+            choice++;
+            if (choice > 1) { choice = 0; }
+
+            lcd.setCursor(1,1);
+            for (int i = 0; i < 12; i++) {
+                lcd.print(" ");
+            }
+
+            if (!choice) {
+                lcd.setCursor(7,1);
+                lcd.print("No");
+            } else {
+                lcd.setCursor(6,1);
+                lcd.print("Yes");
+            }
+        } else if (currentInput == DOWN) {
+            return choice;
+        }
+
+        blinkArrows();
+        delay(16);
+    }
+}
+
+int confirmMenu(char* name) {
+    unsigned char length;
+    for (length = 0; name[length] != '\0'; length++) {}
+    unsigned char totalLength = 7 + length;
+
+    lcd.setCursor((16 - totalLength) / 2, 0);
+    lcd.print("Is it ");
+    for (int i = 0; name[i] != '\0'; i++) { lcd.print(name[i]); }
+    lcd.print("?");
+
+    unsigned char choice = 1;
+
+    while (1) {
+        unsigned char currentInput = joystick();
+
+        if (currentInput == LEFT) {
+            choice--;
+            if (choice > 2) { choice = 1; }
+
+            lcd.setCursor(1,1);
+            for (int i = 0; i < 12; i++) {
+                lcd.print(" ");
+            }
+
+            if (!choice) {
+                lcd.setCursor(7,1);
+                lcd.print("No");
+            } else {
+                lcd.setCursor(6,1);
+                lcd.print("Yes");
+            }
+        } else if (currentInput == RIGHT) {
+            choice++;
+            if (choice > 2) { choice = 0; }
+
+            lcd.setCursor(1,1);
+            for (int i = 0; i < 12; i++) {
+                lcd.print(" ");
+            }
+
+            if (!choice) {
+                lcd.setCursor(7,1);
+                lcd.print("No");
+            } else {
+                lcd.setCursor(6,1);
+                lcd.print("Yes");
+            }
+        } else if (currentInput == DOWN) {
+            return choice;
+        }
+
+        blinkArrows();
+        delay(16);
+    }
 }
