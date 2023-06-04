@@ -323,6 +323,7 @@ void loop() {
     lcd.print("Lines:");
     lcd.setCursor(13,0);
     lcd.print(linesCleared);
+    
 
     unsigned short speed;
 
@@ -446,6 +447,36 @@ void pickShape() {
     if (player.shape & 0x1111) { player.pos.x = (B_X - 4) / 2; }
     else if (player.shape & 0x2222) { player.pos.x = (B_X - 3) / 2; }
     else { player.pos.x = (B_X / 2) - 1; }
+
+    //Renderiza prox peça
+
+    struct Pos tmp;
+    for (int i = B_Y + 1; i < M_Y; i++) {
+        for (int j = 0; j < B_X; j++) {
+            tmp = {j, i};
+            transformPos(&tmp);
+            mx.setPoint(tmp.x, tmp.y, 0);
+        }
+    }
+
+    char x_nextPiece;
+    unsigned int shapeNextPiece = shapes[player.nextPiece][0];
+
+    if (shapeNextPiece & 0x1111) { x_nextPiece = (B_X - 4) / 2; }
+    else if (shapeNextPiece & 0x2222) { x_nextPiece = (B_X - 3) / 2; }
+    else { x_nextPiece = (B_X / 2) - 1; }
+
+    unsigned int b = 0x8000;
+
+    for (int i = 25; i < 25 + 4; i++) {
+        for (int j = x_nextPiece; j < x_nextPiece + 4; j++, b = b>>1) {
+            if (shapeNextPiece & b) {
+                tmp = {j, i};
+                transformPos(&tmp);
+                mx.setPoint(tmp.x, tmp.y, 1);
+            }
+        }
+    }
 
     // Logica para jogo perdido
     if (collisionChecker()) {
