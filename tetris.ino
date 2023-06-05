@@ -868,7 +868,10 @@ void menuScores() {
         for (int j = 0; j < 7; j++) {
             scores[i].name[j] = EEPROM.read(scorePositions[i] + j + 4);
         }
+        maxValidScorePosition++;
     }
+
+    if (maxValidScorePosition > 10) { maxValidScorePosition = 0; }
 
     lcd.clear();
     lcd.setCursor(5,0);
@@ -1136,18 +1139,16 @@ void menuSaveScore() {
     struct Score scores[10];
     for (int i = 0; i < 10; i++) {
         EEPROM.get(scorePositions[i], scores[i].score);
-        if (!scores[i].score) { maxValidScorePosition = i - 1; break; }
+        if (!scores[i].score) { maxValidScorePosition = i; break; }
         for (int j = 0; j < 7; j++) {
             scores[i].name[j] = EEPROM.read(scorePositions[i] + j + 4);
         }
         maxValidScorePosition++;
     }
 
-    unsigned int writePos = 0;
-    if (maxValidScorePosition > -1) {
-        writePos = maxValidScorePosition;
-    }
-
+    unsigned int writePos = maxValidScorePosition;
+    if (maxValidScorePosition > 9) { writePos = 9; }
+    
     if (score < scores[writePos].score) { return; }
 
     lcd.clear();
