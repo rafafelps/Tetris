@@ -1132,7 +1132,7 @@ void menuSaveScore() {
     memoryValidator();
     sortPositions(scorePositions);
 
-    unsigned char maxValidScorePosition = 0;
+    char maxValidScorePosition = 0;
     struct Score scores[10];
     for (int i = 0; i < 10; i++) {
         EEPROM.get(scorePositions[i], scores[i].score);
@@ -1140,6 +1140,7 @@ void menuSaveScore() {
         for (int j = 0; j < 7; j++) {
             scores[i].name[j] = EEPROM.read(scorePositions[i] + j + 4);
         }
+        maxValidScorePosition++;
     }
 
     unsigned int writePos = 0;
@@ -1147,7 +1148,7 @@ void menuSaveScore() {
         writePos = maxValidScorePosition;
     }
 
-    if (score < scores[maxValidScorePosition].score) { return 0; }
+    if (score < scores[writePos].score) { return; }
 
     lcd.clear();
     lcd.setCursor(2,0);
@@ -1232,9 +1233,9 @@ void menuSaveScore() {
                     EEPROM.put(scorePositions[writePos], score);
                     int i;
                     for (i = 0; name[i] != '\0'; i++) {
-                        EEPROM.update(scorePositions[writePos] + i + 1, name[i]);
+                        EEPROM.update(scorePositions[writePos] + i + 4, name[i]);
                     }
-                    EEPROM.update(scorePositions[writePos] + i + 1, '\0');
+                    EEPROM.update(scorePositions[writePos] + i + 4, '\0');
                     return;
                 } else {
                     lcd.clear();
@@ -1259,9 +1260,9 @@ void menuSaveScore() {
                     EEPROM.put(scorePositions[writePos], score);
                     int i;
                     for (i = 0; name[i] != '\0'; i++) {
-                        EEPROM.update(scorePositions[writePos] + i + 1, name[i]);
+                        EEPROM.update(scorePositions[writePos] + i + 4, name[i]);
                     }
-                    EEPROM.update(scorePositions[writePos] + i + 1, '\0');
+                    EEPROM.update(scorePositions[writePos] + i + 4, '\0');
                     return;
                 } else {
                     cursor--;
