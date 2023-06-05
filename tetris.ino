@@ -868,7 +868,7 @@ void menuScores() {
         for (int j = 0; j < 7; j++) {
             scores[i].name[j] = EEPROM.read(scorePositions[i] + j + 4);
         }
-        maxValidScorePosition++;
+        maxValidScorePosition = i;
     }
 
     if (maxValidScorePosition > 10) { maxValidScorePosition = 0; }
@@ -1135,19 +1135,16 @@ void menuSaveScore() {
     memoryValidator();
     sortPositions(scorePositions);
 
-    char maxValidScorePosition = 0;
+    char writePos = 0;
     struct Score scores[10];
     for (int i = 0; i < 10; i++) {
         EEPROM.get(scorePositions[i], scores[i].score);
-        if (!scores[i].score) { maxValidScorePosition = i; break; }
+        if (!scores[i].score) { writePos = i; break; }
         for (int j = 0; j < 7; j++) {
             scores[i].name[j] = EEPROM.read(scorePositions[i] + j + 4);
         }
-        maxValidScorePosition++;
+        writePos = i;
     }
-
-    unsigned int writePos = maxValidScorePosition;
-    if (maxValidScorePosition > 9) { writePos = 9; }
     
     if (score < scores[writePos].score) { return; }
 
