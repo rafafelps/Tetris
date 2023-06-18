@@ -288,6 +288,9 @@ void setup() {
                 lcd.print("Game");
                 lcd.setCursor(5,1);
                 lcd.print("Tetris");
+
+                thisNote = 0;
+                noteDuration = 0;
             }
         }
 
