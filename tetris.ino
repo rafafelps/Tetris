@@ -825,12 +825,17 @@ int menuDifficulty() {
     lcd.print("Easy");
     unsigned char difficulty = 0;
 
-    delay(500);
+    unsigned int delayValue = 500;
+    menuTime = millis();
 
     while (1) {
         unsigned char currentInput = joystick();
 
         playSong();
+        unsigned long currentTime = millis();
+        if (currentTime - menuTime <= delayValue) { continue; }
+        menuTime = currentTime;
+        delayValue = 0;
 
         if (currentInput == DOWN) {
             if (difficulty == 0) { level = 0; } // Easy
@@ -844,7 +849,7 @@ int menuDifficulty() {
 
             displayDifficulty(difficulty);
 
-            delay(200);
+            delayValue = 200;
         } else if (currentInput == RIGHT) {
             // Scroll rightToleft
             difficulty++;
@@ -852,11 +857,11 @@ int menuDifficulty() {
 
             displayDifficulty(difficulty);
 
-            delay(200);
+            delayValue = 200;
         } else if (currentInput == UP) { return 0; }
 
         blinkArrows();
-        delay(16);
+        if (!delayValue) { delayValue = 16; }
     }
 }
 
@@ -894,12 +899,17 @@ void menuScores() {
         anyScores = 1;
     }
 
-    delay(500);
+    unsigned int delayValue = 500;
+    menuTime = millis();
 
     while (1) {
         unsigned char currentInput = joystick();
 
         playSong();
+        unsigned long currentTime = millis();
+        if (currentTime - menuTime <= delayValue) { continue; }
+        menuTime = currentTime;
+        delayValue = 0;
 
         if (currentInput == UP) { return; }
         else if (currentInput == LEFT) {
@@ -915,7 +925,7 @@ void menuScores() {
                 displayScore(&scores[currScore]);
             }
 
-            delay(200);
+            delayValue = 200;
         } else if (currentInput == RIGHT) {
             lcd.setCursor(0,1);
             lcd.write(LEFT_ARROW);
@@ -929,11 +939,11 @@ void menuScores() {
                 displayScore(&scores[currScore]);   
             }
 
-            delay(200);
+            delayValue = 200;
         }
 
         blinkArrows();
-        delay(16);
+        if (!delayValue) { delayValue = 16; }
     }
 }
 
