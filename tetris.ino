@@ -168,10 +168,6 @@ int notes=sizeof(melody)/sizeof(melody[0])/2;
 // this calculates the duration of a whole note in ms (60s/tempo)*4 beats
 int wholenote = (60000 * 4) / tempo;
 
-int divider = 0, noteDuration = 0;
-
-int lastNote = 0; 
-
 struct Pos {
 	char x;
 	char y;
@@ -239,6 +235,9 @@ unsigned short linesRequired;
 unsigned short previousLines;
 unsigned short level = 0;
 unsigned long score = 0;
+int thisNote = 0;
+int noteDuration = 0;
+unsigned long songTime;
 
 byte leftArrow[] = {
     0b00001,
@@ -272,6 +271,7 @@ void setup() {
     lcd.clear();
     randomSeed(EEPROM.read(0));
     oldTime = millis();
+    songTime = oldTime;
 
     lcd.setCursor(6,0);
     lcd.print("Game");
@@ -1036,40 +1036,30 @@ unsigned short setDAS()
     return (1/(60/framesgrid))*1000;
 }
 
-void playSong()
-{
-    // iterate over the notes of the melody. 
-  // Remember, the array is twice the number of notes (notes + durations)
-  int thisNote = 0;
-  
-  for (thisNote = lastNote; thisNote < notes * 2 && joystick() == 0; thisNote = thisNote + 2) {
+void playSong() {
+    if (!noteDuration) {
+        // calculates the duration of each note
+        int divider = melody[thisNote + 1];
+        if (divider > 0) {
+            // regular note, just proceed
+            noteDuration = (wholenote) / divider;
+        } else if (divider < 0) {
+            // dotted notes are represented with negative durations!!
+            noteDuration = (wholenote) / abs(divider);
+            noteDuration *= 1.5; // increases the duration in half for dotted notes
+        }
 
-    // calculates the duration of each note
-    divider = melody[thisNote + 1];
-    if (divider > 0) {
-      // regular note, just proceed
-      noteDuration = (wholenote) / divider;
-    } else if (divider < 0) {
-      // dotted notes are represented with negative durations!!
-      noteDuration = (wholenote) / abs(divider);
-      noteDuration *= 1.5; // increases the duration in half for dotted notes
-    }
+        tone(BUZZER, melody[thisNote], noteDuration*0.9);
+    } else {
+        unsigned long currentTime = millis();
+        if (currentTime - songTime >= noteDuration) {
+            noTone(BUZZER);
+            noteDuration = 0;
+            songTime = currentTime;
 
-    // we only play the note for 90% of the duration, leaving 10% as a pause
-    tone(BUZZER, melody[thisNote], noteDuration*0.9);
-
-    // Wait for the specief duration before playing the next note.
-    delay(noteDuration);
-    
-    // stop the waveform generation before the next note.
-    noTone(BUZZER);
-
-    lastNote = thisNote;
-  }
-  
-  if (thisNote == notes * 2)
-    {
-        lastNote =0;
+            thisNote += 2;
+            if (thisNote >= notes * 2) { thisNote = 0; }
+        }
     }
 }
 
