@@ -238,6 +238,7 @@ unsigned long score = 0;
 int thisNote = 0;
 int noteDuration = 0;
 unsigned long songTime;
+unsigned long menuTime;
 
 byte leftArrow[] = {
     0b00001,
@@ -756,12 +757,17 @@ int menuTetris() {
     lcd.print("Play");
     unsigned char currentOption = 0;
 
-    delay(500);
+    unsigned int delayValue = 500;
+    menuTime = millis();
 
     while (1) {
         unsigned char currentInput = joystick();
 
         playSong();
+        unsigned long currentTime = millis();
+        if (currentTime - menuTime <= delayValue) { continue; }
+        menuTime = currentTime;
+        delayValue = 0;
 
         if (currentInput == DOWN) {
             if (!currentOption && menuDifficulty()) { return 1; }
@@ -779,7 +785,7 @@ int menuTetris() {
                 lcd.print("Scores");
             }
 
-            delay(200);
+            delayValue = 500;
         } else if (currentInput == LEFT || currentInput == RIGHT) {
             currentOption++;
             if (currentOption > 1) { currentOption = 0; }
@@ -803,11 +809,11 @@ int menuTetris() {
                 lcd.print("Scores");
             }
 
-            delay(200);
+            delayValue = 200;
         } else if (currentInput == UP) { return 0; }
 
         blinkArrows();
-        delay(16);
+        if (!delayValue) { delayValue = 16; }
     }
 }
 
@@ -1050,12 +1056,12 @@ void playSong() {
         }
 
         tone(BUZZER, melody[thisNote], noteDuration*0.9);
+        songTime = millis();
     } else {
         unsigned long currentTime = millis();
         if (currentTime - songTime >= noteDuration) {
             noTone(BUZZER);
             noteDuration = 0;
-            songTime = currentTime;
 
             thisNote += 2;
             if (thisNote >= notes * 2) { thisNote = 0; }
