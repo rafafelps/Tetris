@@ -12,7 +12,7 @@
       <img src="./docs/assets/SFML.png" width="120"/>
     </a>
     <a href="https://www.arduino.cc" target="_blank" rel="noopener">
-      <img src="./docs/assets/Arduino.png" width="100"/>
+      <img src="./docs/assets/Arduino.png" width="120"/>
     </a>
   </p>
 </div>
