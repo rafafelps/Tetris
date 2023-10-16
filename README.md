@@ -2,7 +2,7 @@
 
 <div align="center">
   <p>
-    <strong>A simple Tetris Clone for PC and Arduino.</strong>
+    <strong>A simple Tetris clone for PC and Arduino.</strong>
   </p>
   <p>
     <a href="https://cplusplus.com/reference/" target="_blank" rel="noopener">
@@ -32,8 +32,8 @@ Tetris clone for PC made in C++ (programmed in C style) using SFML to render. Ar
     <a href="./docs/assets/TetrisArduino.png" target="_blank" rel="noopener">
       <img src="./docs/assets/TetrisArduino.png" width="50%"/>
     </a>
-    <a href="https://www.youtube.com/watch?v=0zau1vQD6Aw">Video here</a>
 </p>
+Youtube video: <a href="https://www.youtube.com/watch?v=0zau1vQD6Aw">youtube.com/watch?v=0zau1vQD6Aw</a>
 
 ## Authors
 
